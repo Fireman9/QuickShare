@@ -14,7 +14,7 @@ set(CMAKE_AUTORCC ON)
 
 # --------------------------- Boost settings ----------------------------
 set(BOOST_ENABLE_CMAKE ON)
-set(BOOST_COMPONENTS system)
+set(BOOST_COMPONENTS system serialization)
 
 # ---------------------------- Qt settings ------------------------------
 set(QT_INCLUDE_LIBRARIES Core Gui Widgets)
@@ -32,14 +32,13 @@ find_package(Boost REQUIRED COMPONENTS ${BOOST_COMPONENTS})
 add_executable(QuickShare main.cpp)
 
 # ----------------------- Include directories ---------------------------
-if(${Boost_FOUND})
-    target_include_directories(QuickShare PRIVATE ${Boost_INCLUDE_DIRS})
-endif()
+target_include_directories(QuickShare PRIVATE ${Boost_INCLUDE_DIRS})
 
 # -------------------------- Library linking ----------------------------
 list(TRANSFORM QT_INCLUDE_LIBRARIES PREPEND "Qt6::")
-target_link_libraries(QuickShare
-    PRIVATE ${Boost_LIBRARIES} ${QT_INCLUDE_LIBRARIES}
+target_link_libraries(QuickShare PRIVATE
+    ${Boost_LIBRARIES}
+    ${QT_INCLUDE_LIBRARIES}
 )
 
 # -------------------- Windows-specific settings ------------------------

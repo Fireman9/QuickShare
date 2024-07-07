@@ -1,6 +1,9 @@
 #include <iostream>
 
+#include <boost/archive/text_iarchive.hpp>
+#include <boost/archive/text_oarchive.hpp>
 #include <boost/asio.hpp>
+#include <boost/serialization/string.hpp>
 
 #include <QApplication>
 #include <QLabel>
@@ -44,15 +47,37 @@ void check_qt6(int argc, char* argv[])
 //     std::cout << std::endl;
 // }
 
-// void check_protobuf()
-// {
-//     GOOGLE_PROTOBUF_VERIFY_VERSION;
-//     tutorial::Person person;
-//     person.set_name("John Doe");
-//     person.set_id(1234);
-//     person.set_email("johndoe@example.com");
-//     std::cout << "Protocol Buffers: " << person.DebugString() << std::endl;
-// }
+struct Person
+{
+    std::string name;
+    int         age;
+
+    template <class Archive>
+    void serialize(Archive& ar, const unsigned int version)
+    {
+        ar & name;
+        ar & age;
+    }
+};
+
+void check_serialization()
+{
+    std::stringstream ss;
+    {
+        Person p{"John Doe", 30};
+        boost::archive::text_oarchive oa(ss);
+        oa << p;
+    }
+    std::cout << "Serialized content:\n" << ss.str() << std::endl;
+
+    Person restored;
+    {
+        boost::archive::text_iarchive ia(ss);
+        ia >> restored;
+    }
+    std::cout << "Name: " << restored.name << ", Age: " << restored.age
+              << std::endl;
+}
 
 int main(int argc, char* argv[])
 {
@@ -65,8 +90,8 @@ int main(int argc, char* argv[])
     // std::cout << "\nOpenSSL:" << std::endl;
     // check_openssl();
 
-    // std::cout << "\nProtoBuf:" << std::endl;
-    // check_protobuf();
+    std::cout << "\nSerialization:" << std::endl;
+    check_serialization();
 
     return 0;
 }
