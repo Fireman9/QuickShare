@@ -18,10 +18,12 @@ set(BOOST_COMPONENTS system serialization)
 
 # ---------------------------- Qt settings ------------------------------
 set(QT_INCLUDE_LIBRARIES Core Gui Widgets)
+set(OPENSSL_INCLUDE_LIBRARIES SSL Crypto)
 
 # --------------------------- Find packages -----------------------------
 find_package(Qt6 REQUIRED COMPONENTS ${QT_INCLUDE_LIBRARIES})
 find_package(Boost REQUIRED COMPONENTS ${BOOST_COMPONENTS})
+find_package(OpenSSL REQUIRED)
 
 # ------------------------- Project structure ---------------------------
 # Get project files
@@ -36,9 +38,11 @@ target_include_directories(QuickShare PRIVATE ${Boost_INCLUDE_DIRS})
 
 # -------------------------- Library linking ----------------------------
 list(TRANSFORM QT_INCLUDE_LIBRARIES PREPEND "Qt6::")
+list(TRANSFORM OPENSSL_INCLUDE_LIBRARIES PREPEND "OpenSSL::")
 target_link_libraries(QuickShare PRIVATE
     ${Boost_LIBRARIES}
     ${QT_INCLUDE_LIBRARIES}
+    ${OPENSSL_INCLUDE_LIBRARIES}
 )
 
 # -------------------- Windows-specific settings ------------------------

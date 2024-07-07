@@ -8,8 +8,8 @@
 #include <QApplication>
 #include <QLabel>
 
-// #include "message.pb.h"
-// #include <openssl/sha.h>
+#include <openssl/crypto.h>
+#include <openssl/opensslv.h>
 
 void check_boost_asio()
 {
@@ -30,22 +30,13 @@ void check_qt6(int argc, char* argv[])
     app.exec();
 }
 
-// void check_openssl()
-// {
-//     unsigned char hash[SHA256_DIGEST_LENGTH];
-//     const char*   data = "OpenSSL test";
-//     SHA256_CTX    sha256;
-//     SHA256_Init(&sha256);
-//     SHA256_Update(&sha256, data, strlen(data));
-//     SHA256_Final(hash, &sha256);
-
-//     std::cout << "OpenSSL SHA256: ";
-//     for (int i = 0; i < SHA256_DIGEST_LENGTH; i++)
-//     {
-//         printf("%02x", hash[i]);
-//     }
-//     std::cout << std::endl;
-// }
+void check_openssl()
+{
+    std::cout << "OpenSSL version: " << OpenSSL_version(OPENSSL_VERSION)
+              << std::endl;
+    std::cout << "OpenSSL library version: " << OpenSSL_version(OPENSSL_CFLAGS)
+              << std::endl;
+}
 
 struct Person
 {
@@ -87,8 +78,8 @@ int main(int argc, char* argv[])
     std::cout << "\nQt6:" << std::endl;
     check_qt6(argc, argv);
 
-    // std::cout << "\nOpenSSL:" << std::endl;
-    // check_openssl();
+    std::cout << "\nOpenSSL:" << std::endl;
+    check_openssl();
 
     std::cout << "\nSerialization:" << std::endl;
     check_serialization();
