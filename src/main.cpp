@@ -11,6 +11,8 @@
 #include <openssl/crypto.h>
 #include <openssl/opensslv.h>
 
+#include "network/NetworkManager.hpp"
+
 void check_boost_asio()
 {
     boost::asio::io_context   io_context;
@@ -55,7 +57,7 @@ void check_serialization()
 {
     std::stringstream ss;
     {
-        Person p{"John Doe", 30};
+        Person                        p{"John Doe", 30};
         boost::archive::text_oarchive oa(ss);
         oa << p;
     }

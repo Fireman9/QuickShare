@@ -26,12 +26,13 @@ find_package(Boost REQUIRED COMPONENTS ${BOOST_COMPONENTS})
 find_package(OpenSSL REQUIRED)
 
 # ------------------------- Project structure ---------------------------
-# Get project files
-# add_subdirectory(include)
-# add_subdirectory(source)
+file(GLOB_RECURSE PROJECT_SOURCES
+    "src/*.cpp"
+    "src/*.hpp"
+)
 
 # ---------------------------- Executable -------------------------------
-add_executable(QuickShare main.cpp)
+add_executable(QuickShare ${PROJECT_SOURCES})
 
 # ----------------------- Include directories ---------------------------
 target_include_directories(QuickShare PRIVATE ${Boost_INCLUDE_DIRS})
