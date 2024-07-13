@@ -19,8 +19,6 @@ class Peer
     Peer(boost::asio::io_context& ioContext, std::string_view uniqueCode,
          std::string_view ip, std::uint16_t port);
 
-    // TODO: send and receive
-
     std::string_view getUniqueCode() const noexcept;
     std::string_view getIP() const noexcept;
     std::uint16_t    getPort() const noexcept;
