@@ -1,33 +1,32 @@
 #include "Peer.hpp"
 
-Peer::Peer(boost::asio::io_context& ioContext, std::string_view uniqueCode,
-           std::string_view ip, std::uint16_t port) :
-    m_uniqueCode(uniqueCode),
-    m_ip(ip), m_port(port), m_connectionStatus(ConnectionStatus::Disconnected),
-    m_socket(ioContext)
+Peer::Peer(std::string_view peerId, std::string_view ipAddress,
+           std::uint16_t port) :
+    m_peerId(peerId),
+    m_ip(ipAddress), m_port(port), m_isConnected(false)
 {}
 
-std::string_view Peer::getUniqueCode() const noexcept
+std::string_view Peer::getPeerId() const
 {
-    return m_uniqueCode;
+    return m_peerId;
 }
 
-std::string_view Peer::getIP() const noexcept
+std::string_view Peer::getIpAddress() const
 {
     return m_ip;
 }
 
-std::uint16_t Peer::getPort() const noexcept
+std::uint16_t Peer::getPort() const
 {
     return m_port;
 }
 
-Peer::ConnectionStatus Peer::getConnectionStatus() const noexcept
+void Peer::setConnected(bool status)
 {
-    return m_connectionStatus;
+    m_isConnected = status;
 }
 
-void Peer::setConnectionStatus(ConnectionStatus status) noexcept
+bool Peer::isConnected() const
 {
-    m_connectionStatus = status;
+    return m_isConnected;
 }

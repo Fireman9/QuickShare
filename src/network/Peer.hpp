@@ -1,8 +1,6 @@
 #ifndef PEER_HPP
 #define PEER_HPP
 
-#include <boost/asio.hpp>
-#include <boost/system/error_code.hpp>
 #include <cstdint>
 #include <string>
 #include <string_view>
@@ -10,27 +8,21 @@
 class Peer
 {
   public:
-    enum class ConnectionStatus : std::uint8_t {
-        Disconnected,
-        Connecting,
-        Connected
-    };
+    Peer(std::string_view peerId, std::string_view ipAddress,
+         std::uint16_t port);
 
-    Peer(boost::asio::io_context& ioContext, std::string_view uniqueCode,
-         std::string_view ip, std::uint16_t port);
+    std::string_view getPeerId() const;
+    std::string_view getIpAddress() const;
+    std::uint16_t    getPort() const;
 
-    std::string_view getUniqueCode() const noexcept;
-    std::string_view getIP() const noexcept;
-    std::uint16_t    getPort() const noexcept;
-    ConnectionStatus getConnectionStatus() const noexcept;
-    void             setConnectionStatus(ConnectionStatus status) noexcept;
+    void setConnected(bool status);
+    bool isConnected() const;
 
   private:
-    std::string                  m_uniqueCode;
-    std::string                  m_ip;
-    std::uint16_t                m_port;
-    ConnectionStatus             m_connectionStatus;
-    boost::asio::ip::tcp::socket m_socket;
+    std::string   m_peerId;
+    std::string   m_ip;
+    std::uint16_t m_port;
+    bool          m_isConnected;
 };
 
 #endif // PEER_HPP
