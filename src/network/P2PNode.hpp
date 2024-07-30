@@ -5,6 +5,7 @@
 #include <memory>
 #include <vector>
 
+#include "FileTransferModule.hpp"
 #include "Peer.hpp"
 
 class P2PNode
@@ -13,10 +14,17 @@ class P2PNode
     P2PNode(boost::asio::io_context& io_context);
     ~P2PNode();
 
-    bool                  connect(const Peer& peer);
-    void                  disconnect();
-    bool                  sendData(const std::vector<uint8_t>& data);
-    std::vector<uint8_t>  receiveData();
+    bool connect(const Peer& peer);
+    void disconnect();
+
+    bool                 sendData(const std::vector<uint8_t>& data);
+    std::vector<uint8_t> receiveData();
+
+    bool  sendFile(const std::string& filePath);
+    bool  receiveFile(const std::string& saveDir, const std::string& fileName,
+                      std::size_t fileSize);
+    float getFileTransferProgress() const;
+
     std::shared_ptr<Peer> getCurrentPeer() const;
     bool                  isPeerConnected() const;
 
@@ -34,6 +42,8 @@ class P2PNode
     std::shared_ptr<Peer>        m_currentPeer;
     std::vector<uint8_t>         m_receiveBuffer;
     static const std::size_t     MAX_BUFFER_SIZE = 65536; // 64KB buffer
+
+    FileTransferModule m_fileTransfer;
 };
 
 #endif // P2P_NODE_HPP

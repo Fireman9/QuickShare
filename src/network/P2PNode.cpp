@@ -99,6 +99,38 @@ std::vector<uint8_t> P2PNode::receiveData()
     }
 }
 
+bool P2PNode::sendFile(const std::string& filePath)
+{
+    if (!isPeerConnected())
+    {
+        std::cout << "Not connected to any peer.\n";
+        return false;
+    }
+
+    return m_fileTransfer.sendFile(filePath,
+                                   [this](const std::vector<uint8_t>& chunk) {
+                                       return this->sendData(chunk);
+                                   });
+}
+
+bool P2PNode::receiveFile(const std::string& saveDir,
+                          const std::string& fileName, std::size_t fileSize)
+{
+    if (!isPeerConnected())
+    {
+        std::cout << "Not connected to any peer.\n";
+        return false;
+    }
+
+    return m_fileTransfer.receiveFile(saveDir, fileName, fileSize,
+                                      [this]() { return this->receiveData(); });
+}
+
+float P2PNode::getFileTransferProgress() const
+{
+    return m_fileTransfer.getProgress();
+}
+
 std::shared_ptr<Peer> P2PNode::getCurrentPeer() const
 {
     return m_currentPeer;
