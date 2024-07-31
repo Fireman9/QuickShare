@@ -1,13 +1,18 @@
 #ifndef FILE_TRANSFER_MODULE_HPP
 #define FILE_TRANSFER_MODULE_HPP
 
+#include <algorithm>
+#include <bit>
 #include <cstdint>
 #include <filesystem>
 #include <fstream>
 #include <functional>
 #include <iostream>
+#include <span>
 #include <string>
 #include <vector>
+
+#include "FileChunker.hpp"
 
 class FileTransferModule
 {
@@ -18,7 +23,6 @@ class FileTransferModule
     bool sendFile(const std::string& filePath,
                   std::function<bool(const std::vector<uint8_t>&)> sendDataCallback);
     bool receiveFile(const std::string& saveDir, const std::string& fileName,
-                     std::size_t fileSize,
                      std::function<std::vector<uint8_t>()> receiveDataCallback);
 
     void  pauseTransfer();
@@ -33,6 +37,8 @@ class FileTransferModule
     std::size_t m_totalSize;
     std::size_t m_transferredSize;
     bool        m_isPaused;
+
+    FileChunker m_fileChunker;
 };
 
 #endif // FILE_TRANSFER_MODULE_HPP

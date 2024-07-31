@@ -11,7 +11,8 @@
 class P2PNode
 {
   public:
-    P2PNode(boost::asio::io_context& io_context);
+    P2PNode(boost::asio::io_context& io_context,
+            std::size_t chunkSize = 1024 * 1024);
     ~P2PNode();
 
     bool connect(const Peer& peer);
@@ -21,8 +22,7 @@ class P2PNode
     std::vector<uint8_t> receiveData();
 
     bool  sendFile(const std::string& filePath);
-    bool  receiveFile(const std::string& saveDir, const std::string& fileName,
-                      std::size_t fileSize);
+    bool  receiveFile(const std::string& saveDir, const std::string& fileName);
     float getFileTransferProgress() const;
 
     std::shared_ptr<Peer> getCurrentPeer() const;

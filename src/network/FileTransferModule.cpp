@@ -5,31 +5,54 @@ FileTransferModule::FileTransferModule(std::size_t chunkSize) :
     m_isPaused(false)
 {}
 
+// TODO: formatting
 bool FileTransferModule::sendFile(
     const std::string&                               filePath,
     std::function<bool(const std::vector<uint8_t>&)> sendDataCallback)
 {
-    std::ifstream file(filePath, std::ios::binary);
-    if (!file)
+    auto chunks = m_fileChunker.splitFile(filePath);
+    if (chunks.empty())
     {
-        std::cerr << "Failed to open file: " << filePath << std::endl;
+        std::cerr << "Failed to split file into chunks: " << filePath
+                  << std::endl;
         return false;
     }
 
-    file.seekg(0, std::ios::end);
-    m_totalSize = file.tellg();
-    file.seekg(0, std::ios::beg);
-
+    m_totalSize = std::filesystem::file_size(filePath);
     m_transferredSize = 0;
 
-    while (file && !m_isPaused)
+    // Send file size
+    auto sizeData =
+        std::bit_cast<std::array<uint8_t, sizeof(m_totalSize)>>(m_totalSize);
+    if (!sendDataCallback(
+            std::vector<uint8_t>(sizeData.begin(), sizeData.end())))
     {
-        std::vector<uint8_t> chunk = readFileChunk(file);
-        if (chunk.empty()) break;
+        std::cerr << "Failed to send file size" << std::endl;
+        return false;
+    }
+
+    // Send number of chunks
+    uint32_t numChunks = static_cast<uint32_t>(chunks.size());
+    auto     numChunksData =
+        std::bit_cast<std::array<uint8_t, sizeof(numChunks)>>(numChunks);
+    if (!sendDataCallback(
+            std::vector<uint8_t>(numChunksData.begin(), numChunksData.end())))
+    {
+        std::cerr << "Failed to send number of chunks" << std::endl;
+        return false;
+    }
+
+    for (const auto& chunk : chunks)
+    {
+        if (m_isPaused)
+        {
+            std::cout << "Transfer paused" << std::endl;
+            return false;
+        }
 
         if (!sendDataCallback(chunk))
         {
-            std::cerr << "Failed to send data chunk" << std::endl;
+            std::cerr << "Failed to send chunk" << std::endl;
             return false;
         }
 
@@ -41,32 +64,58 @@ bool FileTransferModule::sendFile(
 
 bool FileTransferModule::receiveFile(
     const std::string& saveDir, const std::string& fileName,
-    std::size_t                           fileSize,
     std::function<std::vector<uint8_t>()> receiveDataCallback)
 {
-    std::filesystem::path filePath = std::filesystem::path(saveDir) / fileName;
-    std::ofstream         file(filePath, std::ios::binary);
-    if (!file)
+    // Receive file size
+    auto sizeData = receiveDataCallback();
+    if (sizeData.size() != sizeof(m_totalSize))
     {
-        std::cerr << "Failed to create file: " << filePath << std::endl;
+        std::cerr << "Failed to receive file size" << std::endl;
         return false;
     }
+    std::array<uint8_t, sizeof(m_totalSize)> sizeArray;
+    std::copy_n(sizeData.begin(), sizeof(m_totalSize), sizeArray.begin());
+    m_totalSize = std::bit_cast<std::size_t>(sizeArray);
 
-    m_totalSize = fileSize;
-    m_transferredSize = 0;
-
-    while (m_transferredSize < m_totalSize && !m_isPaused)
+    // Receive number of chunks
+    auto numChunksData = receiveDataCallback();
+    if (numChunksData.size() != sizeof(uint32_t))
     {
-        std::vector<uint8_t> chunk = receiveDataCallback();
-        if (chunk.empty()) break;
+        std::cerr << "Failed to receive number of chunks" << std::endl;
+        return false;
+    }
+    std::array<uint8_t, sizeof(uint32_t)> numChunksArray;
+    std::copy_n(numChunksData.begin(), sizeof(uint32_t),
+                numChunksArray.begin());
+    uint32_t numChunks = std::bit_cast<uint32_t>(numChunksArray);
 
-        if (!writeFileChunk(file, chunk))
+    m_transferredSize = 0;
+    std::vector<std::vector<uint8_t>> chunks;
+
+    for (uint32_t i = 0; i < numChunks; ++i)
+    {
+        if (m_isPaused)
         {
-            std::cerr << "Failed to write data chunk" << std::endl;
+            std::cout << "Transfer paused" << std::endl;
             return false;
         }
 
+        auto chunk = receiveDataCallback();
+        if (chunk.empty())
+        {
+            std::cerr << "Failed to receive chunk " << i << std::endl;
+            return false;
+        }
+
+        chunks.push_back(chunk);
         m_transferredSize += chunk.size();
+    }
+
+    std::filesystem::path filePath = std::filesystem::path(saveDir) / fileName;
+    if (!m_fileChunker.mergeChunks(chunks, filePath.string()))
+    {
+        std::cerr << "Failed to merge chunks" << std::endl;
+        return false;
     }
 
     return m_transferredSize == m_totalSize;

@@ -1,10 +1,10 @@
 #include "P2PNode.hpp"
 #include <iostream>
 
-P2PNode::P2PNode(io_context& io_context) :
+P2PNode::P2PNode(boost::asio::io_context& io_context, std::size_t chunkSize) :
     m_ioContext(io_context),
-    m_socket(std::make_unique<tcp::socket>(io_context)),
-    m_receiveBuffer(MAX_BUFFER_SIZE)
+    m_socket(std::make_unique<boost::asio::ip::tcp::socket>(io_context)),
+    m_receiveBuffer(MAX_BUFFER_SIZE), m_fileTransfer(chunkSize)
 {}
 
 P2PNode::~P2PNode()
@@ -108,13 +108,13 @@ bool P2PNode::sendFile(const std::string& filePath)
     }
 
     return m_fileTransfer.sendFile(filePath,
-                                   [this](const std::vector<uint8_t>& chunk) {
-                                       return this->sendData(chunk);
+                                   [this](const std::vector<uint8_t>& data) {
+                                       return this->sendData(data);
                                    });
 }
 
 bool P2PNode::receiveFile(const std::string& saveDir,
-                          const std::string& fileName, std::size_t fileSize)
+                          const std::string& fileName)
 {
     if (!isPeerConnected())
     {
@@ -122,7 +122,7 @@ bool P2PNode::receiveFile(const std::string& saveDir,
         return false;
     }
 
-    return m_fileTransfer.receiveFile(saveDir, fileName, fileSize,
+    return m_fileTransfer.receiveFile(saveDir, fileName,
                                       [this]() { return this->receiveData(); });
 }
 
