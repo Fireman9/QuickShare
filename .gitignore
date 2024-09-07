@@ -1,6 +1,6 @@
 # directories
 .vscode/
-build/
+build*/
 
 # files
 .clang-format
