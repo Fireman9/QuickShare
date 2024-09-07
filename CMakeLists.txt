@@ -9,6 +9,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # ------------------------- Set CMake settings --------------------------
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(BOOST_ENABLE_CMAKE ON)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
 # ----------------------- Include directories ---------------------------
 include_directories(${Boost_INCLUDE_DIRS})
