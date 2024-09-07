@@ -33,7 +33,7 @@ class PeerConnection : public std::enable_shared_from_this<PeerConnection>
 
     void doRead();
     void doWrite();
-    void handleRead(const error_code& error, std::size_t bytes_transferred);
+    void handleRead(const error_code& error);
     void handleWrite(const error_code& error);
 
     tcp::socket                   socket_;
@@ -41,6 +41,7 @@ class PeerConnection : public std::enable_shared_from_this<PeerConnection>
     std::queue<std::vector<char>> write_queue_;
     MessageHandler                message_handler_;
     bool                          is_writing_;
+    uint32_t                      message_length_;
 };
 
 #endif // PEER_CONNECTION_HPP

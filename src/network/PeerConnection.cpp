@@ -29,8 +29,7 @@ void PeerConnection::stop()
 
 void PeerConnection::sendMessage(const Message& message)
 {
-    // TODO: serialize the message
-    // serialization logic
+    // TODO: MessageType file
     if (message.getType() != MessageType::TEXT)
     {
         LOG_ERROR << "Only TEXT messages are supported at the moment";
@@ -38,11 +37,15 @@ void PeerConnection::sendMessage(const Message& message)
     }
 
     const TextMessage& text_message = static_cast<const TextMessage&>(message);
-    std::string        text_to_send = text_message.getText();
+    std::string        serialized = text_message.serialize();
 
-    std::vector<char> data_to_send(text_to_send.begin(), text_to_send.end());
+    uint32_t          length = static_cast<uint32_t>(serialized.size());
+    std::vector<char> data_to_send(sizeof(length) + serialized.size());
+    std::memcpy(data_to_send.data(), &length, sizeof(length));
+    std::memcpy(data_to_send.data() + sizeof(length), serialized.data(),
+                serialized.size());
 
-    LOG_INFO << "Sending message: " << text_to_send;
+    LOG_INFO << "Sending message: " << text_message.getText();
 
     bool write_in_progress = !write_queue_.empty();
     write_queue_.push(std::move(data_to_send));
@@ -65,11 +68,23 @@ boost::asio::ip::tcp::socket& PeerConnection::socket()
 void PeerConnection::doRead()
 {
     auto self(shared_from_this());
-    socket_.async_read_some(
-        boost::asio::buffer(read_buffer_),
-        [this, self](const error_code& error, std::size_t bytes_transferred) {
-            LOG_INFO << "Message received";
-            handleRead(error, bytes_transferred);
+    boost::asio::async_read(
+        socket_, boost::asio::buffer(&message_length_, sizeof(message_length_)),
+        [this, self](const error_code& error,
+                     std::size_t /*bytes_transferred*/) {
+            if (!error)
+            {
+                read_buffer_.resize(message_length_);
+                boost::asio::async_read(
+                    socket_, boost::asio::buffer(read_buffer_),
+                    [this, self](const error_code& error,
+                                 std::size_t /*bytes_transferred*/) {
+                        handleRead(error);
+                    });
+            } else {
+                LOG_ERROR << "Read error: " << error.message();
+                stop();
+            }
         });
 }
 
@@ -90,19 +105,14 @@ void PeerConnection::doWrite()
                              });
 }
 
-void PeerConnection::handleRead(const error_code& error,
-                                std::size_t       bytes_transferred)
+void PeerConnection::handleRead(const error_code& error)
 {
     if (!error)
     {
-        // TODO: deserialize the message
-        std::string received_data(read_buffer_.begin(),
-                                  read_buffer_.begin() + bytes_transferred);
+        std::string received_data(read_buffer_.begin(), read_buffer_.end());
+        LOG_INFO << "Received raw data, bytes: " << received_data.size();
 
-        LOG_INFO << "Received raw data: " << received_data
-                 << ", bytes: " << bytes_transferred;
-
-        TextMessage text_message(received_data);
+        TextMessage text_message = TextMessage::deserialize(received_data);
         if (message_handler_)
         {
             message_handler_(text_message);

@@ -73,7 +73,7 @@ int main(int argc, char* argv[])
         {
             network_manager->sendMessage(msg, peer_key);
         } else {
-            network_manager->broadcastMessage(msg);
+            network_manager->sendMessage(msg, peer_key);
         }
         LOG_INFO << "Sent message: " << input;
     }
