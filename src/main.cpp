@@ -3,8 +3,8 @@
 #include <string>
 #include <thread>
 
+#include "Message/TextMessage.hpp"
 #include "NetworkManager.hpp"
-#include "TextMessage.hpp"
 #include "logger.hpp"
 
 void printUsage()
@@ -59,6 +59,8 @@ int main(int argc, char* argv[])
 
     std::cout << "Type a message and press Enter to send. Type 'quit' to exit."
               << std::endl;
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
     std::string input;
     while (true)
