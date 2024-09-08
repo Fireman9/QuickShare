@@ -1,8 +1,8 @@
 #ifndef CHUNK_MESSAGE_HPP
 #define CHUNK_MESSAGE_HPP
 
-#include <boost/archive/text_iarchive.hpp>
-#include <boost/archive/text_oarchive.hpp>
+#include <boost/archive/binary_iarchive.hpp>
+#include <boost/archive/binary_oarchive.hpp>
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/string.hpp>
 #include <boost/serialization/vector.hpp>
@@ -16,17 +16,17 @@ class ChunkMessage : public Message
   public:
     ChunkMessage() = default;
     ChunkMessage(const std::string& file_id, size_t chunk_number, size_t offset,
-                 const std::vector<char>& data);
+                 const std::vector<uint8_t>& data);
 
     MessageType getType() const override { return MessageType::CHUNK; }
 
-    const std::string&       getFileId() const { return file_id_; }
-    size_t                   getChunkNumber() const { return chunk_number_; }
-    size_t                   getOffset() const { return offset_; }
-    const std::vector<char>& getData() const { return data_; }
+    const std::string&          getFileId() const { return file_id_; }
+    size_t                      getChunkNumber() const { return chunk_number_; }
+    size_t                      getOffset() const { return offset_; }
+    const std::vector<uint8_t>& getData() const { return data_; }
 
-    std::string         serialize() const;
-    static ChunkMessage deserialize(const std::string& serialized);
+    std::vector<uint8_t> serialize() const;
+    static ChunkMessage  deserialize(const std::vector<uint8_t>& serialized);
 
   private:
     friend class boost::serialization::access;
@@ -40,10 +40,10 @@ class ChunkMessage : public Message
         ar & data_;
     }
 
-    std::string       file_id_;
-    size_t            chunk_number_;
-    size_t            offset_;
-    std::vector<char> data_;
+    std::string          file_id_;
+    size_t               chunk_number_;
+    size_t               offset_;
+    std::vector<uint8_t> data_;
 };
 
 #endif // CHUNK_MESSAGE_HPP
