@@ -5,7 +5,7 @@
 #include <memory>
 #include <unordered_map>
 
-#include "Message.hpp"
+#include "Message/Message.hpp"
 #include "logger.hpp"
 
 class MessageHandler

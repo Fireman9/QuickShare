@@ -6,8 +6,8 @@
 #include <memory>
 #include <queue>
 
-#include "Message.hpp"
-#include "TextMessage.hpp"
+#include "Message/Message.hpp"
+#include "Message/TextMessage.hpp"
 #include "logger.hpp"
 
 class PeerConnection : public std::enable_shared_from_this<PeerConnection>

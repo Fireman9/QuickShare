@@ -1,4 +1,4 @@
-#include "TextMessage.hpp"
+#include "Message/TextMessage.hpp"
 
 std::string TextMessage::serialize() const
 {
