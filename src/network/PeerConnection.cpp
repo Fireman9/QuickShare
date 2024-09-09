@@ -29,23 +29,51 @@ void PeerConnection::stop()
 
 void PeerConnection::sendMessage(const Message& message)
 {
-    // TODO: MessageType file
-    if (message.getType() != MessageType::TEXT)
+    std::vector<uint8_t> serialized_data;
+    MessageType          type = message.getType();
+
+    switch (type)
     {
-        LOG_ERROR << "Only TEXT messages are supported at the moment";
-        return;
+        case MessageType::TEXT:
+        {
+            const TextMessage& text_message =
+                static_cast<const TextMessage&>(message);
+            std::string serialized_string = text_message.serialize();
+            serialized_data = std::vector<uint8_t>(serialized_string.begin(),
+                                                   serialized_string.end());
+            break;
+        }
+        case MessageType::FILE_METADATA:
+        {
+            const FileMetadata& file_metadata =
+                static_cast<const FileMetadata&>(message);
+            std::string serialized_string = file_metadata.serialize();
+            serialized_data = std::vector<uint8_t>(serialized_string.begin(),
+                                                   serialized_string.end());
+            break;
+        }
+        case MessageType::CHUNK:
+        {
+            const ChunkMessage& chunk_message =
+                static_cast<const ChunkMessage&>(message);
+            serialized_data = chunk_message.serialize();
+            break;
+        }
+        default: LOG_ERROR << "Unknown message type"; return;
     }
 
-    const TextMessage& text_message = static_cast<const TextMessage&>(message);
-    std::string        serialized = text_message.serialize();
+    uint32_t             length = static_cast<uint32_t>(serialized_data.size());
+    std::vector<uint8_t> data_to_send(sizeof(MessageType) + sizeof(length) +
+                                      serialized_data.size());
 
-    uint32_t          length = static_cast<uint32_t>(serialized.size());
-    std::vector<char> data_to_send(sizeof(length) + serialized.size());
-    std::memcpy(data_to_send.data(), &length, sizeof(length));
-    std::memcpy(data_to_send.data() + sizeof(length), serialized.data(),
-                serialized.size());
+    std::memcpy(data_to_send.data(), &type, sizeof(MessageType));
+    std::memcpy(data_to_send.data() + sizeof(MessageType), &length,
+                sizeof(length));
+    std::memcpy(data_to_send.data() + sizeof(MessageType) + sizeof(length),
+                serialized_data.data(), serialized_data.size());
 
-    LOG_INFO << "Sending message: " << text_message.getText();
+    LOG_INFO << "Sending message of type: " << static_cast<int>(type)
+             << ", size: " << serialized_data.size();
 
     bool write_in_progress = !write_queue_.empty();
     write_queue_.push(std::move(data_to_send));
@@ -69,20 +97,35 @@ void PeerConnection::doRead()
 {
     auto self(shared_from_this());
     boost::asio::async_read(
-        socket_, boost::asio::buffer(&message_length_, sizeof(message_length_)),
+        socket_,
+        boost::asio::buffer(&current_message_type_, sizeof(MessageType)),
         [this, self](const error_code& error,
                      std::size_t /*bytes_transferred*/) {
             if (!error)
             {
-                read_buffer_.resize(message_length_);
                 boost::asio::async_read(
-                    socket_, boost::asio::buffer(read_buffer_),
+                    socket_,
+                    boost::asio::buffer(&message_length_,
+                                        sizeof(message_length_)),
                     [this, self](const error_code& error,
                                  std::size_t /*bytes_transferred*/) {
-                        handleRead(error);
+                        if (!error)
+                        {
+                            read_buffer_.resize(message_length_);
+                            boost::asio::async_read(
+                                socket_, boost::asio::buffer(read_buffer_),
+                                [this, self](const error_code& error,
+                                             std::size_t bytes_transferred) {
+                                    handleRead(error, bytes_transferred);
+                                });
+                        } else {
+                            LOG_ERROR << "Read error (message length): "
+                                      << error.message();
+                            stop();
+                        }
                     });
             } else {
-                LOG_ERROR << "Read error: " << error.message();
+                LOG_ERROR << "Read error (message type): " << error.message();
                 stop();
             }
         });
@@ -105,17 +148,50 @@ void PeerConnection::doWrite()
                              });
 }
 
-void PeerConnection::handleRead(const error_code& error)
+void PeerConnection::handleRead(const error_code& error,
+                                size_t            bytes_transferred)
 {
+    // TODO: separate functions
     if (!error)
     {
-        std::string received_data(read_buffer_.begin(), read_buffer_.end());
-        LOG_INFO << "Received raw data, bytes: " << received_data.size();
+        LOG_INFO << "Received message of type: "
+                 << static_cast<int>(current_message_type_)
+                 << ", size: " << bytes_transferred;
 
-        TextMessage text_message = TextMessage::deserialize(received_data);
         if (message_handler_)
         {
-            message_handler_(text_message);
+            switch (current_message_type_)
+            {
+                case MessageType::TEXT:
+                {
+                    std::string serialized_string(read_buffer_.begin(),
+                                                  read_buffer_.end());
+                    TextMessage text_message =
+                        TextMessage::deserialize(serialized_string);
+                    message_handler_(text_message);
+                    break;
+                }
+                case MessageType::FILE_METADATA:
+                {
+                    std::string  serialized_string(read_buffer_.begin(),
+                                                   read_buffer_.end());
+                    FileMetadata file_metadata =
+                        FileMetadata::deserialize(serialized_string);
+                    message_handler_(file_metadata);
+                    break;
+                }
+                case MessageType::CHUNK:
+                {
+                    ChunkMessage chunk_message =
+                        ChunkMessage::deserialize(read_buffer_);
+                    message_handler_(chunk_message);
+                    break;
+                }
+                default:
+                    LOG_ERROR << "Unknown message type received: "
+                              << static_cast<int>(current_message_type_);
+                    break;
+            }
         }
 
         doRead();
