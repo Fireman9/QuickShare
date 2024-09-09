@@ -11,6 +11,10 @@ void printUsage()
 {
     std::cout << "Usage: ./QuickShare <listen_port> [connect_ip connect_port]"
               << std::endl;
+    std::cout << "Commands:" << std::endl;
+    std::cout << "  send <message>      - Send a text message" << std::endl;
+    std::cout << "  sendfile <filepath> - Send a file" << std::endl;
+    std::cout << "  quit                - Exit the program" << std::endl;
 }
 
 int main(int argc, char* argv[])
@@ -57,27 +61,63 @@ int main(int argc, char* argv[])
         std::cout << "Connected to " << peer_key << std::endl;
     }
 
-    std::cout << "Type a message and press Enter to send. Type 'quit' to exit."
+    std::cout << "Type 'send <message>' to send a text message, 'sendfile "
+                 "<filepath>' to send a file, or 'quit' to exit."
               << std::endl;
-
-    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
     std::string input;
     while (true)
     {
         std::getline(std::cin, input);
-        if (input == "quit")
+        std::istringstream iss(input);
+        std::string        command;
+        iss >> command;
+
+        if (command == "quit")
         {
             break;
-        }
-        TextMessage msg(input);
-        if (!peer_key.empty())
-        {
-            network_manager->sendMessage(msg, peer_key);
+        } else if (command == "send") {
+            std::string message;
+            std::getline(iss >> std::ws, message);
+            if (!message.empty())
+            {
+                TextMessage msg(message);
+                if (!peer_key.empty())
+                {
+                    network_manager->sendMessage(msg, peer_key);
+                    LOG_INFO << "Sent message: " << message;
+                } else {
+                    network_manager->broadcastMessage(msg);
+                    LOG_INFO << "Broadcast message: " << message;
+                }
+            } else {
+                std::cout << "Error: Empty message. Usage: send <message>"
+                          << std::endl;
+            }
+        } else if (command == "sendfile") {
+            std::string filepath;
+            iss >> filepath;
+            if (!filepath.empty())
+            {
+                if (!peer_key.empty())
+                {
+                    network_manager->startSendingFile(filepath, peer_key);
+                    LOG_INFO << "Started sending file: " << filepath;
+                } else {
+                    std::cout << "Error: No peer connected. Cannot send file."
+                              << std::endl;
+                    LOG_WARNING
+                        << "Attempted to send file without connected peer";
+                }
+            } else {
+                std::cout
+                    << "Error: No file specified. Usage: sendfile <filepath>"
+                    << std::endl;
+            }
         } else {
-            network_manager->sendMessage(msg, peer_key);
+            std::cout << "Unknown command. ";
+            printUsage();
         }
-        LOG_INFO << "Sent message: " << input;
     }
 
     network_manager->stop();
