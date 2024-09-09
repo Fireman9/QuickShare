@@ -7,6 +7,7 @@
 #include <thread>
 #include <unordered_map>
 
+#include "FileTransfer.hpp"
 #include "MessageHandler.hpp"
 #include "PeerConnection.hpp"
 #include "logger.hpp"
@@ -27,6 +28,9 @@ class NetworkManager : public std::enable_shared_from_this<NetworkManager>
     void broadcastMessage(const Message& message);
 
     void sendMessage(const Message& message, const std::string& peer_key);
+    void startSendingFile(const std::string& file_path,
+                          const std::string& peer_key);
+    void cancelFileTransfer(const std::string& file_id);
 
     void setMessageHandler(const MessageHandler::MessageCallback& handler);
 
@@ -39,6 +43,13 @@ class NetworkManager : public std::enable_shared_from_this<NetworkManager>
     void handleConnect(std::shared_ptr<PeerConnection> new_connection,
                        const error_code&               error);
 
+    void handleIncomingMessage(const Message&     message,
+                               const std::string& peer_key);
+    void handleFileMetadata(const FileMetadata& metadata,
+                            const std::string&  peer_key);
+    void handleChunkMessage(const ChunkMessage& chunk_msg,
+                            const std::string&  peer_key);
+
     std::string getPeerKey(const tcp::endpoint& endpoint) const;
 
     io_context                        io_context_;
@@ -46,6 +57,7 @@ class NetworkManager : public std::enable_shared_from_this<NetworkManager>
     std::shared_ptr<io_context::work> work_;
     MessageHandler                    message_handler_;
     std::unordered_map<std::string, std::shared_ptr<PeerConnection>> peers_;
+    std::shared_ptr<FileTransfer> file_transfer_;
 };
 
 #endif // NETWORK_MANAGER_HPP

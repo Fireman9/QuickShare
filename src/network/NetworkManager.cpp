@@ -6,8 +6,40 @@ std::shared_ptr<NetworkManager> NetworkManager::create()
 }
 
 NetworkManager::NetworkManager() :
-    work_(std::make_shared<io_context::work>(io_context_))
-{}
+    work_(std::make_shared<io_context::work>(io_context_)),
+    file_transfer_(
+        std::make_shared<FileTransfer>(std::make_shared<FileSystemManager>()))
+{
+    file_transfer_->setChunkReadyCallback([this](const ChunkMessage& chunk) {
+        auto it = peers_.find(
+            chunk.getFileId().substr(chunk.getFileId().find('_') + 1));
+        LOG_INFO << chunk.getFileId().substr(chunk.getFileId().find('_') + 1);
+        if (it != peers_.end())
+        {
+            LOG_INFO << "peer found";
+            it->second->sendMessage(chunk);
+            LOG_INFO << "chunk send";
+        }
+        LOG_INFO << "ended chunkReadyCallback";
+    });
+
+    file_transfer_->setFileMetadataCallback(
+        [this](const FileMetadata& metadata) {
+            auto it = peers_.find(metadata.getFileId().substr(
+                metadata.getFileId().find('_') + 1));
+            if (it != peers_.end())
+            {
+                it->second->sendMessage(metadata);
+            }
+        });
+
+    file_transfer_->setTransferCompleteCallback(
+        [this](const std::string& file_id, bool success) {
+            LOG_INFO << "File transfer " << (success ? "completed" : "failed")
+                     << " for file ID: " << file_id;
+            // TODO: add more logic here
+        });
+}
 
 void NetworkManager::start(uint16_t port)
 {
@@ -77,11 +109,32 @@ void NetworkManager::sendMessage(const Message&     message,
     }
 }
 
+void NetworkManager::startSendingFile(const std::string& file_path,
+                                      const std::string& peer_key)
+{
+    LOG_INFO << "Starting to send file: " << file_path
+             << " to peer: " << peer_key;
+    file_transfer_->startSending(file_path, peer_key);
+}
+
+void NetworkManager::cancelFileTransfer(const std::string& file_id)
+{
+    LOG_INFO << "Cancelling file transfer for file ID: " << file_id;
+    file_transfer_->cancelTransfer(file_id);
+}
+
 void NetworkManager::setMessageHandler(
     const MessageHandler::MessageCallback& handler)
 {
-    // TODO: now only text messages work
     message_handler_.registerHandler(MessageType::TEXT, handler);
+
+    for (const auto& peer : peers_)
+    {
+        peer.second->setMessageHandler(
+            [this, peer_key = peer.first](const Message& msg) {
+                this->handleIncomingMessage(msg, peer_key);
+            });
+    }
 }
 
 void NetworkManager::doAccept()
@@ -102,16 +155,15 @@ void NetworkManager::handleAccept(
         LOG_INFO << "New connection accepted from "
                  << new_connection->socket().remote_endpoint();
 
-        new_connection->setMessageHandler([this](const Message& msg) {
-            message_handler_.handleMessage(msg);
-        });
-
-        new_connection->start();
-
         std::string peer_key =
             getPeerKey(new_connection->socket().remote_endpoint());
         peers_[peer_key] = new_connection;
 
+        new_connection->setMessageHandler([this, peer_key](const Message& msg) {
+            this->handleIncomingMessage(msg, peer_key);
+        });
+
+        new_connection->start();
         doAccept();
     } else {
         LOG_ERROR << "Error accepting new connection: " << error.message();
@@ -126,18 +178,52 @@ void NetworkManager::handleConnect(
         LOG_INFO << "Connected to peer "
                  << new_connection->socket().remote_endpoint();
 
-        new_connection->setMessageHandler([this](const Message& msg) {
-            message_handler_.handleMessage(msg);
-        });
-
-        new_connection->start();
-
         std::string peer_key =
             getPeerKey(new_connection->socket().remote_endpoint());
         peers_[peer_key] = new_connection;
+
+        new_connection->setMessageHandler([this, peer_key](const Message& msg) {
+            this->handleIncomingMessage(msg, peer_key);
+        });
+
+        new_connection->start();
     } else {
         LOG_ERROR << "Error connecting to peer: " << error.message();
     }
+}
+
+void NetworkManager::handleIncomingMessage(const Message&     message,
+                                           const std::string& peer_key)
+{
+    switch (message.getType())
+    {
+        case MessageType::TEXT: message_handler_.handleMessage(message); break;
+        case MessageType::FILE_METADATA:
+            handleFileMetadata(static_cast<const FileMetadata&>(message),
+                               peer_key);
+            break;
+        case MessageType::CHUNK:
+            handleChunkMessage(static_cast<const ChunkMessage&>(message),
+                               peer_key);
+            break;
+        default: LOG_ERROR << "Unknown message type received";
+    }
+}
+
+void NetworkManager::handleFileMetadata(const FileMetadata& metadata,
+                                        const std::string&  peer_key)
+{
+    LOG_INFO << "Received file metadata for file: " << metadata.getFileName()
+             << " from peer: " << peer_key;
+    file_transfer_->startReceiving(metadata);
+}
+
+void NetworkManager::handleChunkMessage(const ChunkMessage& chunk_msg,
+                                        const std::string&  peer_key)
+{
+    LOG_INFO << "Received chunk " << chunk_msg.getChunkNumber()
+             << " for file ID: " << chunk_msg.getFileId();
+    file_transfer_->handleIncomingChunk(chunk_msg);
 }
 
 std::string NetworkManager::getPeerKey(const tcp::endpoint& endpoint) const
