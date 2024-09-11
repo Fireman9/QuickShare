@@ -10,7 +10,7 @@ FileMetadata::FileMetadata(const std::string& file_id,
 std::vector<uint8_t> FileMetadata::serialize() const
 {
     std::ostringstream              oss;
-    boost::archive::binary_oarchive oa(oss);
+    boost::archive::binary_oarchive oa(oss, boost::archive::no_header);
     oa << *this;
     const std::string& str = oss.str();
     return std::vector<uint8_t>(str.begin(), str.end());
@@ -21,7 +21,7 @@ FileMetadata FileMetadata::deserialize(const std::vector<uint8_t>& serialized)
     FileMetadata                    metadata;
     std::string                     str(serialized.begin(), serialized.end());
     std::istringstream              iss(str);
-    boost::archive::binary_iarchive ia(iss);
+    boost::archive::binary_iarchive ia(iss, boost::archive::no_header);
     ia >> metadata;
     return metadata;
 }
