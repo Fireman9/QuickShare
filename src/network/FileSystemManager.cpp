@@ -2,17 +2,15 @@
 
 namespace fs = std::filesystem;
 
-bool FileSystemManager::fileExists(const std::string& file_path) const
+bool FileSystemManager::fileExists(const fs::path& file_path) const
 {
     return fs::exists(file_path);
 }
 
-std::uintmax_t
-FileSystemManager::getFileSize(const std::string& file_path) const
+std::uintmax_t FileSystemManager::getFileSize(const fs::path& file_path) const
 {
     if (!fileExists(file_path))
     {
-        // TODO: optional in all file
         LOG_ERROR << "File does not exist: " << file_path;
         return 0;
     }
@@ -20,9 +18,8 @@ FileSystemManager::getFileSize(const std::string& file_path) const
 }
 
 std::string
-FileSystemManager::calculateFileHash(const std::string& file_path) const
+FileSystemManager::calculateFileHash(const fs::path& file_path) const
 {
-    // TODO: replace with SHA256
     if (!fileExists(file_path))
     {
         LOG_ERROR << "File does not exist: " << file_path;
@@ -47,9 +44,9 @@ FileSystemManager::calculateFileHash(const std::string& file_path) const
     return std::to_string(result.checksum());
 }
 
-std::vector<uint8_t> FileSystemManager::readChunk(const std::string& file_path,
-                                                  std::streampos     offset,
-                                                  std::streamsize    size) const
+std::vector<uint8_t> FileSystemManager::readChunk(const fs::path& file_path,
+                                                  std::streampos  offset,
+                                                  std::streamsize size) const
 {
     std::ifstream file(file_path, std::ios::binary);
     if (!file)
@@ -66,7 +63,7 @@ std::vector<uint8_t> FileSystemManager::readChunk(const std::string& file_path,
     return buffer;
 }
 
-void FileSystemManager::writeChunk(const std::string&          file_path,
+void FileSystemManager::writeChunk(const fs::path&             file_path,
                                    std::streampos              offset,
                                    const std::vector<uint8_t>& data)
 {
@@ -87,8 +84,8 @@ void FileSystemManager::writeChunk(const std::string&          file_path,
     }
 }
 
-void FileSystemManager::createFile(const std::string& file_path,
-                                   std::uintmax_t     size)
+void FileSystemManager::createFile(const fs::path& file_path,
+                                   std::uintmax_t  size)
 {
     std::ofstream file(file_path, std::ios::binary);
     if (!file)
@@ -106,23 +103,24 @@ void FileSystemManager::createFile(const std::string& file_path,
     }
 }
 
-void FileSystemManager::deleteFile(const std::string& file_path)
+void FileSystemManager::deleteFile(const fs::path& file_path)
 {
-    if (!fs::remove(file_path))
+    std::error_code ec;
+    if (!fs::remove(file_path, ec))
     {
-        LOG_ERROR << "Unable to delete file: " << file_path;
+        LOG_ERROR << "Unable to delete file: " << file_path
+                  << ". Error: " << ec.message();
     }
 }
 
-std::string FileSystemManager::getFileName(const std::string& file_path) const
+std::string FileSystemManager::getFileName(const fs::path& file_path) const
 {
-    return fs::path(file_path).filename().string();
+    return file_path.filename().string();
 }
 
-std::fstream FileSystemManager::openFile(const std::string&      file_path,
+std::fstream FileSystemManager::openFile(const fs::path&         file_path,
                                          std::ios_base::openmode mode) const
 {
-    // TODO: remove function?
     std::fstream file(file_path, mode);
     if (!file)
     {

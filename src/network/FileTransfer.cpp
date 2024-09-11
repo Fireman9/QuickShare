@@ -12,15 +12,9 @@ void FileTransfer::startSending(const std::string& file_path,
         LOG_ERROR << "File does not exist: " << file_path;
     }
 
-    LOG_INFO << "file exists";
-
-    std::string    file_id = generateFileId(file_path, peer_id);
-    std::uintmax_t file_size = fs_manager_->getFileSize(file_path);
-    size_t         total_chunks = (file_size + CHUNK_SIZE - 1) / CHUNK_SIZE;
-
-    LOG_INFO << "fileID: " << file_id;
-    LOG_INFO << "file size: " << file_size;
-    LOG_INFO << "total chunks: " << total_chunks;
+    std::string file_id = generateFileId(file_path, peer_id);
+    uintmax_t   file_size = fs_manager_->getFileSize(file_path);
+    size_t      total_chunks = (file_size + CHUNK_SIZE - 1) / CHUNK_SIZE;
 
     TransferInfo info{file_path, peer_id, total_chunks, 0, true, false};
     active_transfers_[file_id] = info;
@@ -32,7 +26,6 @@ void FileTransfer::startSending(const std::string& file_path,
         file_metadata_callback_(metadata);
     }
 
-    LOG_INFO << "calling processNextChunk";
     processNextChunk(file_id);
 }
 
@@ -69,15 +62,10 @@ void FileTransfer::handleIncomingChunk(const ChunkMessage& chunk_msg)
         return;
     }
 
-    LOG_INFO << "calling writeChunk, filepath: " << info.file_path
-             << ", offset: " << chunk_msg.getOffset();
-
     fs_manager_->writeChunk(info.file_path, chunk_msg.getOffset(),
                             chunk_msg.getData());
-    LOG_INFO << "writeChunk called";
     info.current_chunk++;
 
-    LOG_INFO << "calling checkTransferCompletion";
     checkTransferCompletion(chunk_msg.getFileId());
 }
 
@@ -141,52 +129,28 @@ void FileTransfer::processNextChunk(const std::string& file_id)
         return;
     }
 
-    LOG_INFO << "active_transfers_ found";
-
     TransferInfo& info = it->second;
-
-    LOG_INFO << "current_chunk: " << info.current_chunk;
-    LOG_INFO << "total_chunks: " << info.total_chunks;
-
     if (info.current_chunk >= info.total_chunks)
     {
-        LOG_INFO << "calling checkTransferCompletion";
         checkTransferCompletion(file_id);
         return;
     }
 
-    LOG_INFO << "checkTransferCompletion not called";
-
-    std::streampos offset = info.current_chunk * CHUNK_SIZE;
-
-    LOG_INFO << "offset: " << offset;
-    LOG_INFO << "calling fs_manager_->readChunk";
-
+    std::streampos       offset = info.current_chunk * CHUNK_SIZE;
     std::vector<uint8_t> data =
         fs_manager_->readChunk(info.file_path, offset, CHUNK_SIZE);
 
-    LOG_INFO << "chunk read";
-    LOG_INFO << "data size: " << data.size();
-
     ChunkMessage chunk(file_id, info.current_chunk, offset, data);
-    LOG_INFO << "chunk created";
     if (chunk_ready_callback_)
     {
-        LOG_INFO << "chunk callback calling";
         chunk_ready_callback_(chunk);
     }
-    LOG_INFO << "chunk callback called";
 
     info.current_chunk++;
-
-    LOG_INFO << "current_chunk: " << info.current_chunk;
-
     if (info.current_chunk < info.total_chunks)
     {
-        LOG_INFO << "calling processNextChunk";
         processNextChunk(file_id);
     } else {
-        LOG_INFO << "calling checkTransferCompletion";
         checkTransferCompletion(file_id);
     }
 }
