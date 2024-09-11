@@ -6,7 +6,7 @@ std::shared_ptr<PeerConnection> PeerConnection::create(io_context& io_context)
 }
 
 PeerConnection::PeerConnection(io_context& io_context) :
-    socket_(io_context), is_writing_(false)
+    socket_(io_context), is_writing_(false), message_length_(0)
 {
     read_buffer_.resize(1024);
 }

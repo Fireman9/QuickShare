@@ -5,6 +5,7 @@
 #include <boost/serialization/string.hpp>
 #include <cstdint>
 #include <string>
+#include <vector>
 
 enum class MessageType : uint8_t {
     TEXT,

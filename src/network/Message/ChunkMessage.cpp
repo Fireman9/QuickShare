@@ -1,4 +1,4 @@
-#include "Message/ChunkMessage.hpp"
+#include "ChunkMessage.hpp"
 
 ChunkMessage::ChunkMessage(const std::string& file_id, size_t chunk_number,
                            size_t offset, const std::vector<uint8_t>& data) :

@@ -20,7 +20,7 @@ class TextMessage : public Message
     const std::string& getText() const { return text_; }
     void               setText(const std::string& text) { text_ = text; }
 
-    std::vector<uint8_t> serialize() const;
+    std::vector<uint8_t> serialize() const override;
     static TextMessage   deserialize(const std::vector<uint8_t>& serialized);
 
   private:

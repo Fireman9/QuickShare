@@ -1,4 +1,4 @@
-#include "Message/TextMessage.hpp"
+#include "TextMessage.hpp"
 
 TextMessage::TextMessage(const std::string& text) : text_(text) {}
 

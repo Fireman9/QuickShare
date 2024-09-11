@@ -202,7 +202,7 @@ void FileTransfer::checkTransferCompletion(const std::string& file_id)
     auto it = active_transfers_.find(file_id);
     if (it != active_transfers_.end())
     {
-        TransferInfo& info = it->second;
+        const TransferInfo& info = it->second;
         if (info.current_chunk >= info.total_chunks)
         {
             if (transfer_complete_callback_)

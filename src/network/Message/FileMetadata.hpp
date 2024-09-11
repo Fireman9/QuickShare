@@ -7,7 +7,7 @@
 #include <sstream>
 #include <vector>
 
-#include "Message/Message.hpp"
+#include "Message.hpp"
 
 class FileMetadata : public Message
 {
@@ -23,7 +23,7 @@ class FileMetadata : public Message
     size_t             getFileSize() const { return file_size_; }
     const std::string& getFileHash() const { return file_hash_; }
 
-    std::vector<uint8_t> serialize() const;
+    std::vector<uint8_t> serialize() const override;
     static FileMetadata  deserialize(const std::vector<uint8_t>& serialized);
 
   private:

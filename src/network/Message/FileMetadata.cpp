@@ -1,4 +1,4 @@
-#include "Message/FileMetadata.hpp"
+#include "FileMetadata.hpp"
 
 FileMetadata::FileMetadata(const std::string& file_id,
                            const std::string& file_name, size_t file_size,

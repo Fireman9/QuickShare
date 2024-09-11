@@ -9,7 +9,7 @@
 #include <sstream>
 #include <vector>
 
-#include "Message/Message.hpp"
+#include "Message.hpp"
 
 class ChunkMessage : public Message
 {
@@ -25,7 +25,7 @@ class ChunkMessage : public Message
     size_t                      getOffset() const { return offset_; }
     const std::vector<uint8_t>& getData() const { return data_; }
 
-    std::vector<uint8_t> serialize() const;
+    std::vector<uint8_t> serialize() const override;
     static ChunkMessage  deserialize(const std::vector<uint8_t>& serialized);
 
   private:
