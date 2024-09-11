@@ -1,18 +1,27 @@
 #include "Message/FileMetadata.hpp"
 
-std::string FileMetadata::serialize() const
+FileMetadata::FileMetadata(const std::string& file_id,
+                           const std::string& file_name, size_t file_size,
+                           const std::string& file_hash) :
+    file_id_(file_id),
+    file_name_(file_name), file_size_(file_size), file_hash_(file_hash)
+{}
+
+std::vector<uint8_t> FileMetadata::serialize() const
 {
-    std::ostringstream            oss;
-    boost::archive::text_oarchive oa(oss);
+    std::ostringstream              oss;
+    boost::archive::binary_oarchive oa(oss);
     oa << *this;
-    return oss.str();
+    const std::string& str = oss.str();
+    return std::vector<uint8_t>(str.begin(), str.end());
 }
 
-FileMetadata FileMetadata::deserialize(const std::string& serialized)
+FileMetadata FileMetadata::deserialize(const std::vector<uint8_t>& serialized)
 {
-    FileMetadata                  metadata;
-    std::istringstream            iss(serialized);
-    boost::archive::text_iarchive ia(iss);
+    FileMetadata                    metadata;
+    std::string                     str(serialized.begin(), serialized.end());
+    std::istringstream              iss(str);
+    boost::archive::binary_iarchive ia(iss);
     ia >> metadata;
     return metadata;
 }

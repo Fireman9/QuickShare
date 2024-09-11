@@ -38,18 +38,14 @@ void PeerConnection::sendMessage(const Message& message)
         {
             const TextMessage& text_message =
                 static_cast<const TextMessage&>(message);
-            std::string serialized_string = text_message.serialize();
-            serialized_data = std::vector<uint8_t>(serialized_string.begin(),
-                                                   serialized_string.end());
+            serialized_data = text_message.serialize();
             break;
         }
         case MessageType::FILE_METADATA:
         {
             const FileMetadata& file_metadata =
                 static_cast<const FileMetadata&>(message);
-            std::string serialized_string = file_metadata.serialize();
-            serialized_data = std::vector<uint8_t>(serialized_string.begin(),
-                                                   serialized_string.end());
+            serialized_data = file_metadata.serialize();
             break;
         }
         case MessageType::CHUNK:
@@ -164,19 +160,15 @@ void PeerConnection::handleRead(const error_code& error,
             {
                 case MessageType::TEXT:
                 {
-                    std::string serialized_string(read_buffer_.begin(),
-                                                  read_buffer_.end());
                     TextMessage text_message =
-                        TextMessage::deserialize(serialized_string);
+                        TextMessage::deserialize(read_buffer_);
                     message_handler_(text_message);
                     break;
                 }
                 case MessageType::FILE_METADATA:
                 {
-                    std::string  serialized_string(read_buffer_.begin(),
-                                                   read_buffer_.end());
                     FileMetadata file_metadata =
-                        FileMetadata::deserialize(serialized_string);
+                        FileMetadata::deserialize(read_buffer_);
                     message_handler_(file_metadata);
                     break;
                 }

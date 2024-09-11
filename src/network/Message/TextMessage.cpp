@@ -1,18 +1,22 @@
 #include "Message/TextMessage.hpp"
 
-std::string TextMessage::serialize() const
+TextMessage::TextMessage(const std::string& text) : text_(text) {}
+
+std::vector<uint8_t> TextMessage::serialize() const
 {
-    std::ostringstream            oss;
-    boost::archive::text_oarchive oa(oss);
+    std::ostringstream              oss;
+    boost::archive::binary_oarchive oa(oss);
     oa << *this;
-    return oss.str();
+    const std::string& str = oss.str();
+    return std::vector<uint8_t>(str.begin(), str.end());
 }
 
-TextMessage TextMessage::deserialize(const std::string& serialized)
+TextMessage TextMessage::deserialize(const std::vector<uint8_t>& serialized)
 {
-    TextMessage                   msg;
-    std::istringstream            iss(serialized);
-    boost::archive::text_iarchive ia(iss);
+    TextMessage                     msg;
+    std::string                     str(serialized.begin(), serialized.end());
+    std::istringstream              iss(str);
+    boost::archive::binary_iarchive ia(iss);
     ia >> msg;
     return msg;
 }

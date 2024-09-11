@@ -19,6 +19,8 @@ class Message
     virtual ~Message() = default;
 
     virtual MessageType getType() const = 0;
+
+    virtual std::vector<uint8_t> serialize() const = 0;
 };
 
 #endif // MESSAGE_HPP
