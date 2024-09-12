@@ -11,22 +11,16 @@ NetworkManager::NetworkManager() :
         std::make_shared<FileTransfer>(std::make_shared<FileSystemManager>()))
 {
     file_transfer_->setChunkReadyCallback([this](const ChunkMessage& chunk) {
-        auto it = peers_.find(
-            chunk.getFileId().substr(chunk.getFileId().find('_') + 1));
-        LOG_INFO << chunk.getFileId().substr(chunk.getFileId().find('_') + 1);
+        auto it = findPeerByFileId(chunk.getFileId());
         if (it != peers_.end())
         {
-            LOG_INFO << "peer found";
             it->second->sendMessage(chunk);
-            LOG_INFO << "chunk send";
         }
-        LOG_INFO << "ended chunkReadyCallback";
     });
 
     file_transfer_->setFileMetadataCallback(
         [this](const FileMetadata& metadata) {
-            auto it = peers_.find(metadata.getFileId().substr(
-                metadata.getFileId().find('_') + 1));
+            auto it = findPeerByFileId(metadata.getFileId());
             if (it != peers_.end())
             {
                 it->second->sendMessage(metadata);
@@ -230,4 +224,11 @@ std::string NetworkManager::getPeerKey(const tcp::endpoint& endpoint) const
 {
     return endpoint.address().to_string() + ":" +
            std::to_string(endpoint.port());
+}
+
+std::unordered_map<std::string, std::shared_ptr<PeerConnection>>::iterator
+NetworkManager::findPeerByFileId(const std::string& file_id)
+{
+    std::string peer_key = file_id.substr(file_id.find('_') + 1);
+    return peers_.find(peer_key);
 }
