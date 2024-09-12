@@ -34,8 +34,13 @@ class PeerConnection : public std::enable_shared_from_this<PeerConnection>
     explicit PeerConnection(io_context& io_context);
 
     void doRead();
-    void doWrite();
+    void readMessageType();
+    void readMessageLength();
+    void readMessageBody();
     void handleRead(const error_code& error, size_t bytes_transferred);
+    void processReceivedMessage();
+
+    void doWrite();
     void handleWrite(const error_code& error);
 
     template <typename T>
@@ -48,6 +53,9 @@ class PeerConnection : public std::enable_shared_from_this<PeerConnection>
     bool                             is_writing_;
     uint32_t                         message_length_;
     MessageType                      current_message_type_;
+
+    static constexpr size_t MESSAGE_TYPE_SIZE = sizeof(MessageType);
+    static constexpr size_t MESSAGE_LENGTH_SIZE = sizeof(uint32_t);
 };
 
 template <typename T>

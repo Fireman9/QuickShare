@@ -72,40 +72,98 @@ boost::asio::ip::tcp::socket& PeerConnection::socket()
 
 void PeerConnection::doRead()
 {
+    readMessageType();
+}
+
+void PeerConnection::readMessageType()
+{
     auto self(shared_from_this());
     boost::asio::async_read(
-        socket_,
-        boost::asio::buffer(&current_message_type_, sizeof(MessageType)),
-        [this, self](const error_code& error,
-                     std::size_t /*bytes_transferred*/) {
+        socket_, boost::asio::buffer(&current_message_type_, MESSAGE_TYPE_SIZE),
+        [this, self](const error_code& error, std::size_t bytes_transferred) {
             if (!error)
             {
-                boost::asio::async_read(
-                    socket_,
-                    boost::asio::buffer(&message_length_,
-                                        sizeof(message_length_)),
-                    [this, self](const error_code& error,
-                                 std::size_t /*bytes_transferred*/) {
-                        if (!error)
-                        {
-                            read_buffer_.resize(message_length_);
-                            boost::asio::async_read(
-                                socket_, boost::asio::buffer(read_buffer_),
-                                [this, self](const error_code& error,
-                                             std::size_t bytes_transferred) {
-                                    handleRead(error, bytes_transferred);
-                                });
-                        } else {
-                            LOG_ERROR << "Read error (message length): "
-                                      << error.message();
-                            stop();
-                        }
-                    });
+                readMessageLength();
             } else {
-                LOG_ERROR << "Read error (message type): " << error.message();
-                stop();
+                handleRead(error, bytes_transferred);
             }
         });
+}
+
+void PeerConnection::readMessageLength()
+{
+    auto self(shared_from_this());
+    boost::asio::async_read(
+        socket_, boost::asio::buffer(&message_length_, MESSAGE_LENGTH_SIZE),
+        [this, self](const error_code& error, std::size_t bytes_transferred) {
+            if (!error)
+            {
+                readMessageBody();
+            } else {
+                handleRead(error, bytes_transferred);
+            }
+        });
+}
+
+void PeerConnection::readMessageBody()
+{
+    read_buffer_.resize(message_length_);
+    auto self(shared_from_this());
+    boost::asio::async_read(
+        socket_, boost::asio::buffer(read_buffer_),
+        [this, self](const error_code& error, std::size_t bytes_transferred) {
+            handleRead(error, bytes_transferred);
+        });
+}
+
+void PeerConnection::handleRead(const error_code& error,
+                                size_t            bytes_transferred)
+{
+    if (!error)
+    {
+        LOG_INFO << "Received message of type: "
+                 << static_cast<int>(current_message_type_)
+                 << ", size: " << bytes_transferred;
+        if (message_handler_)
+        {
+            processReceivedMessage();
+        }
+        doRead();
+    } else {
+        LOG_ERROR << "Read error: " << error.message();
+        stop();
+    }
+}
+
+void PeerConnection::processReceivedMessage()
+{
+    switch (current_message_type_)
+    {
+        case MessageType::TEXT:
+        {
+            TextMessage text_message = TextMessage::deserialize(read_buffer_);
+            message_handler_(text_message);
+            break;
+        }
+        case MessageType::FILE_METADATA:
+        {
+            FileMetadata file_metadata =
+                FileMetadata::deserialize(read_buffer_);
+            message_handler_(file_metadata);
+            break;
+        }
+        case MessageType::CHUNK:
+        {
+            ChunkMessage chunk_message =
+                ChunkMessage::deserialize(read_buffer_);
+            message_handler_(chunk_message);
+            break;
+        }
+        default:
+            LOG_ERROR << "Unknown message type received: "
+                      << static_cast<int>(current_message_type_);
+            break;
+    }
 }
 
 void PeerConnection::doWrite()
@@ -123,55 +181,6 @@ void PeerConnection::doWrite()
                                           std::size_t /*bytes_transferred*/) {
                                  handleWrite(error);
                              });
-}
-
-void PeerConnection::handleRead(const error_code& error,
-                                size_t            bytes_transferred)
-{
-    // TODO: separate functions
-    if (!error)
-    {
-        LOG_INFO << "Received message of type: "
-                 << static_cast<int>(current_message_type_)
-                 << ", size: " << bytes_transferred;
-
-        if (message_handler_)
-        {
-            switch (current_message_type_)
-            {
-                case MessageType::TEXT:
-                {
-                    TextMessage text_message =
-                        TextMessage::deserialize(read_buffer_);
-                    message_handler_(text_message);
-                    break;
-                }
-                case MessageType::FILE_METADATA:
-                {
-                    FileMetadata file_metadata =
-                        FileMetadata::deserialize(read_buffer_);
-                    message_handler_(file_metadata);
-                    break;
-                }
-                case MessageType::CHUNK:
-                {
-                    ChunkMessage chunk_message =
-                        ChunkMessage::deserialize(read_buffer_);
-                    message_handler_(chunk_message);
-                    break;
-                }
-                default:
-                    LOG_ERROR << "Unknown message type received: "
-                              << static_cast<int>(current_message_type_);
-                    break;
-            }
-        }
-
-        doRead();
-    } else {
-        LOG_ERROR << "Read error: " << error.message();
-        stop();
-    }
 }
 
 void PeerConnection::handleWrite(const error_code& error)
