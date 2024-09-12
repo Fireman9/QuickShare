@@ -38,6 +38,9 @@ class PeerConnection : public std::enable_shared_from_this<PeerConnection>
     void handleRead(const error_code& error, size_t bytes_transferred);
     void handleWrite(const error_code& error);
 
+    template <typename T>
+    std::vector<uint8_t> serializeMessage(const T& message);
+
     tcp::socket                      socket_;
     std::vector<uint8_t>             read_buffer_;
     std::queue<std::vector<uint8_t>> write_queue_;
@@ -46,5 +49,24 @@ class PeerConnection : public std::enable_shared_from_this<PeerConnection>
     uint32_t                         message_length_;
     MessageType                      current_message_type_;
 };
+
+template <typename T>
+std::vector<uint8_t> PeerConnection::serializeMessage(const T& message)
+{
+    std::vector<uint8_t> serialized_data = message.serialize();
+    uint32_t             length = static_cast<uint32_t>(serialized_data.size());
+    MessageType          type = message.getType();
+
+    std::vector<uint8_t> data_to_send(sizeof(MessageType) + sizeof(length) +
+                                      serialized_data.size());
+
+    std::memcpy(data_to_send.data(), &type, sizeof(MessageType));
+    std::memcpy(data_to_send.data() + sizeof(MessageType), &length,
+                sizeof(length));
+    std::memcpy(data_to_send.data() + sizeof(MessageType) + sizeof(length),
+                serialized_data.data(), serialized_data.size());
+
+    return data_to_send;
+}
 
 #endif // PEER_CONNECTION_HPP

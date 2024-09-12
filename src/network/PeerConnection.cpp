@@ -29,47 +29,28 @@ void PeerConnection::stop()
 
 void PeerConnection::sendMessage(const Message& message)
 {
-    std::vector<uint8_t> serialized_data;
-    MessageType          type = message.getType();
+    std::vector<uint8_t> data_to_send;
 
-    switch (type)
+    switch (message.getType())
     {
         case MessageType::TEXT:
-        {
-            const TextMessage& text_message =
-                static_cast<const TextMessage&>(message);
-            serialized_data = text_message.serialize();
+            data_to_send =
+                serializeMessage(static_cast<const TextMessage&>(message));
             break;
-        }
         case MessageType::FILE_METADATA:
-        {
-            const FileMetadata& file_metadata =
-                static_cast<const FileMetadata&>(message);
-            serialized_data = file_metadata.serialize();
+            data_to_send =
+                serializeMessage(static_cast<const FileMetadata&>(message));
             break;
-        }
         case MessageType::CHUNK:
-        {
-            const ChunkMessage& chunk_message =
-                static_cast<const ChunkMessage&>(message);
-            serialized_data = chunk_message.serialize();
+            data_to_send =
+                serializeMessage(static_cast<const ChunkMessage&>(message));
             break;
-        }
         default: LOG_ERROR << "Unknown message type"; return;
     }
 
-    uint32_t             length = static_cast<uint32_t>(serialized_data.size());
-    std::vector<uint8_t> data_to_send(sizeof(MessageType) + sizeof(length) +
-                                      serialized_data.size());
-
-    std::memcpy(data_to_send.data(), &type, sizeof(MessageType));
-    std::memcpy(data_to_send.data() + sizeof(MessageType), &length,
-                sizeof(length));
-    std::memcpy(data_to_send.data() + sizeof(MessageType) + sizeof(length),
-                serialized_data.data(), serialized_data.size());
-
-    LOG_INFO << "Sending message of type: " << static_cast<int>(type)
-             << ", size: " << serialized_data.size();
+    LOG_INFO << "Sending message of type: "
+             << static_cast<int>(message.getType())
+             << ", size: " << data_to_send.size();
 
     bool write_in_progress = !write_queue_.empty();
     write_queue_.push(std::move(data_to_send));
