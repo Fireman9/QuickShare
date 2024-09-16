@@ -49,6 +49,8 @@ class NetworkManager : public std::enable_shared_from_this<NetworkManager>
                             const std::string&  peer_key);
     void handleChunkMessage(const ChunkMessage& chunk_msg,
                             const std::string&  peer_key);
+    void handleChunkMetrics(const ChunkMetrics& metrics,
+                            const std::string&  peer_key);
 
     std::string getPeerKey(const tcp::endpoint& endpoint) const;
     std::unordered_map<std::string, std::shared_ptr<PeerConnection>>::iterator

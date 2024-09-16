@@ -7,6 +7,7 @@
 #include <queue>
 
 #include "Message/ChunkMessage.hpp"
+#include "Message/ChunkMetrics.hpp"
 #include "Message/FileMetadata.hpp"
 #include "Message/Message.hpp"
 #include "Message/TextMessage.hpp"

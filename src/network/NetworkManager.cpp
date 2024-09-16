@@ -200,6 +200,10 @@ void NetworkManager::handleIncomingMessage(const Message&     message,
             handleChunkMessage(static_cast<const ChunkMessage&>(message),
                                peer_key);
             break;
+        case MessageType::CHUNK_METRICS:
+            handleChunkMetrics(static_cast<const ChunkMetrics&>(message),
+                               peer_key);
+            break;
         default: LOG_ERROR << "Unknown message type received";
     }
 }
@@ -218,6 +222,34 @@ void NetworkManager::handleChunkMessage(const ChunkMessage& chunk_msg,
     LOG_INFO << "Received chunk " << chunk_msg.getChunkNumber()
              << " for file ID: " << chunk_msg.getFileId();
     file_transfer_->handleIncomingChunk(chunk_msg);
+
+    ChunkMetrics metrics(chunk_msg.getFileId(), chunk_msg.getChunkNumber(),
+                         chunk_msg.getData().size(),
+                         std::chrono::system_clock::now());
+    auto         it = peers_.find(peer_key);
+    if (it != peers_.end())
+    {
+        it->second->sendMessage(metrics);
+    } else {
+        LOG_ERROR << "Peer not found for sending chunk metrics";
+    }
+}
+
+void NetworkManager::handleChunkMetrics(const ChunkMetrics& metrics,
+                                        const std::string&  peer_key)
+{
+    auto received_time = metrics.getReceivedTime();
+    auto current_time = std::chrono::system_clock::now();
+    auto latency = std::chrono::duration_cast<std::chrono::microseconds>(
+        current_time - received_time);
+
+    LOG_INFO << "Received acknowledgement for chunk "
+             << metrics.getChunkNumber()
+             << " of file ID: " << metrics.getFileId()
+             << ", size: " << metrics.getChunkSize() << " bytes"
+             << ", latency: " << latency.count() << " microseconds";
+
+    // TODO: logic here
 }
 
 std::string NetworkManager::getPeerKey(const tcp::endpoint& endpoint) const

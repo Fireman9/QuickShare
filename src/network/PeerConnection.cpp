@@ -45,6 +45,10 @@ void PeerConnection::sendMessage(const Message& message)
             data_to_send =
                 serializeMessage(static_cast<const ChunkMessage&>(message));
             break;
+        case MessageType::CHUNK_METRICS:
+            data_to_send =
+                serializeMessage(static_cast<const ChunkMetrics&>(message));
+            break;
         default: LOG_ERROR << "Unknown message type"; return;
     }
 
@@ -157,6 +161,13 @@ void PeerConnection::processReceivedMessage()
             ChunkMessage chunk_message =
                 ChunkMessage::deserialize(read_buffer_);
             message_handler_(chunk_message);
+            break;
+        }
+        case MessageType::CHUNK_METRICS:
+        {
+            ChunkMetrics chunk_metrics =
+                ChunkMetrics::deserialize(read_buffer_);
+            message_handler_(chunk_metrics);
             break;
         }
         default:
