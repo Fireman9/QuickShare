@@ -11,6 +11,7 @@ enum class MessageType : uint8_t {
     TEXT,
     FILE_METADATA,
     CHUNK,
+    CHUNK_METRICS,
 };
 
 class Message
