@@ -243,13 +243,14 @@ void NetworkManager::handleChunkMetrics(const ChunkMetrics& metrics,
     auto latency = std::chrono::duration_cast<std::chrono::microseconds>(
         current_time - received_time);
 
-    LOG_INFO << "Received acknowledgement for chunk "
-             << metrics.getChunkNumber()
+    LOG_INFO << "Received metrics for chunk " << metrics.getChunkNumber()
              << " of file ID: " << metrics.getFileId()
              << ", size: " << metrics.getChunkSize() << " bytes"
              << ", latency: " << latency.count() << " microseconds";
 
-    // TODO: logic here
+    file_transfer_->handleChunkMetrics(metrics.getFileId(),
+                                       metrics.getChunkNumber(),
+                                       metrics.getChunkSize(), latency);
 }
 
 std::string NetworkManager::getPeerKey(const tcp::endpoint& endpoint) const
