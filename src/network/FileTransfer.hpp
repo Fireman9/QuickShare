@@ -8,6 +8,7 @@
 #include <string>
 #include <unordered_map>
 
+#include "ChunkSizeOptimizer.hpp"
 #include "FileSystemManager.hpp"
 #include "Message/ChunkMessage.hpp"
 #include "Message/FileMetadata.hpp"
@@ -15,13 +16,17 @@
 class FileTransfer
 {
   public:
-    static constexpr size_t CHUNK_SIZE = 1024 * 1024; // 1 MB chunks
+    static constexpr size_t MIN_CHUNK_SIZE = 1024;     // 1 KB
+    static constexpr size_t MAX_CHUNK_SIZE = 10485760; // 10 MB
 
     explicit FileTransfer(std::shared_ptr<FileSystemManager> fs_manager);
 
     void startSending(const std::string& file_path, const std::string& peer_id);
     void startReceiving(const FileMetadata& metadata);
     void handleIncomingChunk(const ChunkMessage& chunk_msg);
+    void handleChunkMetrics(const std::string& file_id, size_t chunk_number,
+                            size_t                    chunk_size,
+                            std::chrono::microseconds latency);
     void pauseTransfer(const std::string& file_id);
     void resumeTransfer(const std::string& file_id);
     void cancelTransfer(const std::string& file_id);
@@ -45,6 +50,8 @@ class FileTransfer
         size_t      current_chunk;
         bool        is_sending;
         bool        is_paused;
+
+        std::unique_ptr<ChunkSizeOptimizer> chunk_size_optimizer;
     };
 
     std::shared_ptr<FileSystemManager>            fs_manager_;
@@ -58,6 +65,8 @@ class FileTransfer
     std::string generateFileId(const std::string& file_path,
                                const std::string& peer_id);
     void        checkTransferCompletion(const std::string& file_id);
+
+    std::vector<size_t> generatePossibleChunkSizes();
 };
 
 #endif // FILE_TRANSFER_HPP
