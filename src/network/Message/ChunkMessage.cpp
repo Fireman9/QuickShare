@@ -1,9 +1,9 @@
 #include "ChunkMessage.hpp"
 
-ChunkMessage::ChunkMessage(const std::string& file_id, size_t chunk_number,
-                           size_t offset, const std::vector<uint8_t>& data) :
+ChunkMessage::ChunkMessage(const std::string& file_id, size_t offset,
+                           const std::vector<uint8_t>& data) :
     file_id_(file_id),
-    chunk_number_(chunk_number), offset_(offset), data_(data)
+    offset_(offset), data_(data)
 {}
 
 std::vector<uint8_t> ChunkMessage::serialize() const

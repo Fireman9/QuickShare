@@ -219,11 +219,11 @@ void NetworkManager::handleFileMetadata(const FileMetadata& metadata,
 void NetworkManager::handleChunkMessage(const ChunkMessage& chunk_msg,
                                         const std::string&  peer_key)
 {
-    LOG_INFO << "Received chunk " << chunk_msg.getChunkNumber()
+    LOG_INFO << "Received chunk with offset " << chunk_msg.getOffset()
              << " for file ID: " << chunk_msg.getFileId();
     file_transfer_->handleIncomingChunk(chunk_msg);
 
-    ChunkMetrics metrics(chunk_msg.getFileId(), chunk_msg.getChunkNumber(),
+    ChunkMetrics metrics(chunk_msg.getFileId(), chunk_msg.getOffset(),
                          chunk_msg.getData().size(),
                          std::chrono::system_clock::now());
     auto         it = peers_.find(peer_key);
@@ -243,13 +243,12 @@ void NetworkManager::handleChunkMetrics(const ChunkMetrics& metrics,
     auto latency = std::chrono::duration_cast<std::chrono::microseconds>(
         current_time - received_time);
 
-    LOG_INFO << "Received metrics for chunk " << metrics.getChunkNumber()
+    LOG_INFO << "Received metrics for chunk with offset " << metrics.getOffset()
              << " of file ID: " << metrics.getFileId()
              << ", size: " << metrics.getChunkSize() << " bytes"
              << ", latency: " << latency.count() << " microseconds";
 
-    file_transfer_->handleChunkMetrics(metrics.getFileId(),
-                                       metrics.getChunkNumber(),
+    file_transfer_->handleChunkMetrics(metrics.getFileId(), metrics.getOffset(),
                                        metrics.getChunkSize(), latency);
 }
 

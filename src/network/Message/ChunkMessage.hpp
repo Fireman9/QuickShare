@@ -15,13 +15,12 @@ class ChunkMessage : public Message
 {
   public:
     ChunkMessage() = default;
-    ChunkMessage(const std::string& file_id, size_t chunk_number, size_t offset,
+    ChunkMessage(const std::string& file_id, size_t offset,
                  const std::vector<uint8_t>& data);
 
     MessageType getType() const override { return MessageType::CHUNK; }
 
     const std::string&          getFileId() const { return file_id_; }
-    size_t                      getChunkNumber() const { return chunk_number_; }
     size_t                      getOffset() const { return offset_; }
     const std::vector<uint8_t>& getData() const { return data_; }
 
@@ -35,13 +34,11 @@ class ChunkMessage : public Message
     void serialize(Archive& ar, const unsigned int version)
     {
         ar & file_id_;
-        ar & chunk_number_;
         ar & offset_;
         ar & data_;
     }
 
     std::string          file_id_;
-    size_t               chunk_number_;
     size_t               offset_;
     std::vector<uint8_t> data_;
 };

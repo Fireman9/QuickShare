@@ -1,10 +1,10 @@
 #include "ChunkMetrics.hpp"
 
 ChunkMetrics::ChunkMetrics(
-    const std::string& file_id, size_t chunk_number, size_t chunk_size,
+    const std::string& file_id, size_t offset, size_t chunk_size,
     std::chrono::system_clock::time_point received_time) :
     file_id_(file_id),
-    chunk_number_(chunk_number), chunk_size_(chunk_size)
+    offset_(offset), chunk_size_(chunk_size)
 {
     received_time_ = std::chrono::duration_cast<std::chrono::microseconds>(
                          received_time.time_since_epoch())

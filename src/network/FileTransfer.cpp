@@ -14,16 +14,13 @@ void FileTransfer::startSending(const std::string& file_path,
     }
 
     std::string file_id = generateFileId(file_path, peer_id);
-    uintmax_t   file_size = fs_manager_->getFileSize(file_path);
-    size_t      initial_chunk_size = (MIN_CHUNK_SIZE + MAX_CHUNK_SIZE) / 2;
-    size_t      total_chunks =
-        (file_size + initial_chunk_size - 1) / initial_chunk_size;
+    size_t      file_size = fs_manager_->getFileSize(file_path);
 
     TransferInfo info{
         file_path,
         peer_id,
-        total_chunks,
         0,
+        file_size,
         true,
         false,
         std::make_unique<ChunkSizeOptimizer>(generatePossibleChunkSizes())};
@@ -45,15 +42,11 @@ void FileTransfer::startReceiving(const FileMetadata& metadata)
     std::string file_path = (current_path / metadata.getFileName()).string();
     fs_manager_->createFile(file_path, metadata.getFileSize());
 
-    size_t initial_chunk_size = (MIN_CHUNK_SIZE + MAX_CHUNK_SIZE) / 2;
-    size_t total_chunks =
-        (metadata.getFileSize() + initial_chunk_size - 1) / initial_chunk_size;
-
     TransferInfo info{
         file_path,
         "",
-        total_chunks,
         0,
+        metadata.getFileSize(),
         false,
         false,
         std::make_unique<ChunkSizeOptimizer>(generatePossibleChunkSizes())};
@@ -80,9 +73,12 @@ void FileTransfer::handleIncomingChunk(const ChunkMessage& chunk_msg)
 
     fs_manager_->writeChunk(info.file_path, chunk_msg.getOffset(),
                             chunk_msg.getData());
-    info.current_chunk++;
+    info.current_offset = chunk_msg.getOffset() + chunk_msg.getData().size();
 
-    checkTransferCompletion(chunk_msg.getFileId());
+    if (info.current_offset >= info.file_size)
+    {
+        checkTransferCompletion(chunk_msg.getFileId());
+    }
 }
 
 void FileTransfer::handleChunkMetrics(const std::string& file_id,
@@ -157,7 +153,7 @@ void FileTransfer::processNextChunk(const std::string& file_id)
     }
 
     TransferInfo& info = it->second;
-    if (info.current_chunk >= info.total_chunks)
+    if (info.current_offset >= info.file_size)
     {
         checkTransferCompletion(file_id);
         return;
@@ -165,17 +161,19 @@ void FileTransfer::processNextChunk(const std::string& file_id)
 
     size_t optimal_chunk_size =
         info.chunk_size_optimizer->getOptimalChunkSize();
-    std::streampos       offset = info.current_chunk * optimal_chunk_size;
-    std::vector<uint8_t> data =
-        fs_manager_->readChunk(info.file_path, offset, optimal_chunk_size);
+    size_t remaining_size = info.file_size - info.current_offset;
+    size_t chunk_size = std::min(optimal_chunk_size, remaining_size);
 
-    ChunkMessage chunk(file_id, info.current_chunk, offset, data);
+    std::vector<uint8_t> data =
+        fs_manager_->readChunk(info.file_path, info.current_offset, chunk_size);
+
+    ChunkMessage chunk(file_id, info.current_offset, data);
     if (chunk_ready_callback_)
     {
         chunk_ready_callback_(chunk);
     }
 
-    info.current_chunk++;
+    info.current_offset += chunk_size;
 }
 
 std::string FileTransfer::generateFileId(const std::string& file_path,
@@ -190,7 +188,7 @@ void FileTransfer::checkTransferCompletion(const std::string& file_id)
     if (it != active_transfers_.end())
     {
         const TransferInfo& info = it->second;
-        if (info.current_chunk >= info.total_chunks)
+        if (info.current_offset >= info.file_size)
         {
             if (transfer_complete_callback_)
             {

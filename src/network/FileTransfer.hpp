@@ -46,8 +46,8 @@ class FileTransfer
     {
         std::string file_path;
         std::string peer_id;
-        size_t      total_chunks;
-        size_t      current_chunk;
+        size_t      current_offset;
+        size_t      file_size;
         bool        is_sending;
         bool        is_paused;
 
