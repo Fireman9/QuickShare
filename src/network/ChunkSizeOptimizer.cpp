@@ -1,7 +1,7 @@
 #include "ChunkSizeOptimizer.hpp"
 
 ChunkSizeOptimizer::ChunkSizeOptimizer(std::vector<size_t> possible_sizes) :
-    possible_sizes_(std::move(possible_sizes))
+    possible_sizes_(std::move(possible_sizes)), rng_(std::random_device{}())
 {
     std::sort(possible_sizes_.begin(), possible_sizes_.end());
     current_size_index_ = possible_sizes_.size() / 2;
@@ -28,18 +28,40 @@ size_t ChunkSizeOptimizer::getOptimalChunkSize()
 
 void ChunkSizeOptimizer::optimizeChunkSize()
 {
-    auto it = std::min_element(
-        performance_data_.begin(), performance_data_.end(),
-        [](const auto& a, const auto& b) {
-            return a.second.average_latency < b.second.average_latency;
-        });
-
-    size_t optimal_size = it->first;
-
-    auto size_it =
-        std::find(possible_sizes_.begin(), possible_sizes_.end(), optimal_size);
-    if (size_it != possible_sizes_.end())
+    // epsilon-greedy strategy
+    if (shouldExplore())
     {
-        current_size_index_ = std::distance(possible_sizes_.begin(), size_it);
+        std::uniform_int_distribution<size_t> dist(0,
+                                                   possible_sizes_.size() - 1);
+        current_size_index_ = dist(rng_);
+    } else {
+        auto it = std::min_element(performance_data_.begin(),
+                                   performance_data_.end(), comparePerformance);
+
+        size_t optimal_size = it->first;
+        auto size_it = std::find(possible_sizes_.begin(), possible_sizes_.end(),
+                                 optimal_size);
+        if (size_it != possible_sizes_.end())
+        {
+            current_size_index_ =
+                std::distance(possible_sizes_.begin(), size_it);
+        }
     }
+}
+
+bool ChunkSizeOptimizer::comparePerformance(
+    const std::pair<const size_t, PerformanceData>& a,
+    const std::pair<const size_t, PerformanceData>& b)
+{
+    auto latency_a = a.second.count < 5 ? std::chrono::microseconds::max() :
+                                          a.second.average_latency;
+    auto latency_b = b.second.count < 5 ? std::chrono::microseconds::max() :
+                                          b.second.average_latency;
+    return latency_a < latency_b;
+}
+
+bool ChunkSizeOptimizer::shouldExplore()
+{
+    std::uniform_real_distribution<double> dist(0.0, 1.0);
+    return dist(rng_) < 0.1;
 }

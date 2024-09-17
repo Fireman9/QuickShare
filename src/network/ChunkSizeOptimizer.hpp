@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <chrono>
 #include <numeric>
+#include <random>
 #include <unordered_map>
 #include <vector>
 
@@ -27,9 +28,15 @@ class ChunkSizeOptimizer
 
     void optimizeChunkSize();
 
+    static bool
+         comparePerformance(const std::pair<const size_t, PerformanceData>& a,
+                            const std::pair<const size_t, PerformanceData>& b);
+    bool shouldExplore();
+
     std::vector<size_t>                         possible_sizes_;
     size_t                                      current_size_index_;
     std::unordered_map<size_t, PerformanceData> performance_data_;
+    std::mt19937                                rng_;
 };
 
 #endif // CHUNK_SIZE_OPTIMIZER_HPP
