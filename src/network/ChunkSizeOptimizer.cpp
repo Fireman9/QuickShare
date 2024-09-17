@@ -18,6 +18,11 @@ void ChunkSizeOptimizer::recordPerformance(size_t                    chunk_size,
     data.total_latency += latency;
     data.count++;
     data.average_latency = data.total_latency / data.count;
+
+    double seconds =
+        std::chrono::duration<double>(data.average_latency).count();
+    data.effective_throughput =
+        static_cast<double>(chunk_size) / seconds / (1024 * 1024);
 }
 
 size_t ChunkSizeOptimizer::getOptimalChunkSize()
@@ -35,7 +40,7 @@ void ChunkSizeOptimizer::optimizeChunkSize()
                                                    possible_sizes_.size() - 1);
         current_size_index_ = dist(rng_);
     } else {
-        auto it = std::min_element(performance_data_.begin(),
+        auto it = std::max_element(performance_data_.begin(),
                                    performance_data_.end(), comparePerformance);
 
         size_t optimal_size = it->first;
@@ -53,11 +58,12 @@ bool ChunkSizeOptimizer::comparePerformance(
     const std::pair<const size_t, PerformanceData>& a,
     const std::pair<const size_t, PerformanceData>& b)
 {
-    auto latency_a = a.second.count < 5 ? std::chrono::microseconds::max() :
-                                          a.second.average_latency;
-    auto latency_b = b.second.count < 5 ? std::chrono::microseconds::max() :
-                                          b.second.average_latency;
-    return latency_a < latency_b;
+    double throughput_a =
+        a.second.count < 5 ? 0.0 : a.second.effective_throughput;
+    double throughput_b =
+        b.second.count < 5 ? 0.0 : b.second.effective_throughput;
+
+    return throughput_a < throughput_b;
 }
 
 bool ChunkSizeOptimizer::shouldExplore()

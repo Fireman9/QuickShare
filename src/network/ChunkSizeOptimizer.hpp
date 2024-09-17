@@ -23,6 +23,7 @@ class ChunkSizeOptimizer
     {
         std::chrono::microseconds total_latency{0};
         std::chrono::microseconds average_latency{0};
+        double                    effective_throughput{0.0};
         size_t                    count{0};
     };
 
