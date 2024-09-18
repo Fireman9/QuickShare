@@ -129,6 +129,11 @@ void NetworkManager::resumeFileTransfer(const std::string& file_id)
     file_transfer_->resumeTransfer(file_id);
 }
 
+double NetworkManager::getFileTransferProgress(const std::string& file_id)
+{
+    return file_transfer_->getTransferProgress(file_id);
+}
+
 void NetworkManager::setMessageHandler(
     const MessageHandler::MessageCallback& handler)
 {

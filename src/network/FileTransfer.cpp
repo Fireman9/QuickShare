@@ -134,6 +134,28 @@ void FileTransfer::cancelTransfer(const std::string& file_id)
     }
 }
 
+double FileTransfer::getTransferProgress(const std::string& file_id) const
+{
+    auto it = active_transfers_.find(file_id);
+    if (it == active_transfers_.end())
+    {
+        LOG_WARNING << "Attempted to get progress for non-existent transfer: "
+                    << file_id;
+        return 0.0;
+    }
+
+    const TransferInfo& info = it->second;
+    if (info.file_size == 0)
+    {
+        LOG_WARNING << "File size is 0 for transfer: " << file_id;
+        return 0.0;
+    }
+
+    double progress =
+        static_cast<double>(info.current_offset) / info.file_size * 100.0;
+    return std::min(progress, 100.0);
+}
+
 void FileTransfer::setChunkReadyCallback(ChunkReadyCallback callback)
 {
     chunk_ready_callback_ = std::move(callback);

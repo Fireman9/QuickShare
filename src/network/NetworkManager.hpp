@@ -27,12 +27,13 @@ class NetworkManager : public std::enable_shared_from_this<NetworkManager>
     void connectToPeer(const std::string& address, uint16_t port);
     void broadcastMessage(const Message& message);
 
-    void sendMessage(const Message& message, const std::string& peer_key);
-    void startSendingFile(const std::string& file_path,
-                          const std::string& peer_key);
-    void cancelFileTransfer(const std::string& file_id);
-    void pauseFileTransfer(const std::string& file_id);
-    void resumeFileTransfer(const std::string& file_id);
+    void   sendMessage(const Message& message, const std::string& peer_key);
+    void   startSendingFile(const std::string& file_path,
+                            const std::string& peer_key);
+    void   cancelFileTransfer(const std::string& file_id);
+    void   pauseFileTransfer(const std::string& file_id);
+    void   resumeFileTransfer(const std::string& file_id);
+    double getFileTransferProgress(const std::string& file_id);
 
     void setMessageHandler(const MessageHandler::MessageCallback& handler);
 
