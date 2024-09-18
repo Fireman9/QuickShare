@@ -126,11 +126,11 @@ void FileTransfer::cancelTransfer(const std::string& file_id)
     auto it = active_transfers_.find(file_id);
     if (it != active_transfers_.end())
     {
-        if (!it->second.is_sending)
-        {
-            fs_manager_->deleteFile(it->second.file_path);
-        }
         active_transfers_.erase(it);
+        if (transfer_complete_callback_)
+        {
+            transfer_complete_callback_(file_id, false);
+        }
     }
 }
 
