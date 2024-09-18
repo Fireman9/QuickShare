@@ -46,7 +46,7 @@ inline void init_logging(trivial::severity_level min_severity = trivial::info,
     if (log_to_file)
     {
         logger::add_file_log(keywords::file_name = "Quickshare_%N.log",
-                          keywords::format = log_formatter);
+                             keywords::format = log_formatter);
     }
 
     if (log_to_console)
