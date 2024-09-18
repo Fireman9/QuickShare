@@ -31,6 +31,8 @@ class NetworkManager : public std::enable_shared_from_this<NetworkManager>
     void startSendingFile(const std::string& file_path,
                           const std::string& peer_key);
     void cancelFileTransfer(const std::string& file_id);
+    void pauseFileTransfer(const std::string& file_id);
+    void resumeFileTransfer(const std::string& file_id);
 
     void setMessageHandler(const MessageHandler::MessageCallback& handler);
 

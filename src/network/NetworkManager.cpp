@@ -117,6 +117,18 @@ void NetworkManager::cancelFileTransfer(const std::string& file_id)
     file_transfer_->cancelTransfer(file_id);
 }
 
+void NetworkManager::pauseFileTransfer(const std::string& file_id)
+{
+    LOG_INFO << "Pausing file transfer for file ID: " << file_id;
+    file_transfer_->pauseTransfer(file_id);
+}
+
+void NetworkManager::resumeFileTransfer(const std::string& file_id)
+{
+    LOG_INFO << "Resuming file transfer for file ID: " << file_id;
+    file_transfer_->resumeTransfer(file_id);
+}
+
 void NetworkManager::setMessageHandler(
     const MessageHandler::MessageCallback& handler)
 {

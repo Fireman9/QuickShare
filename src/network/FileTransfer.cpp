@@ -99,6 +99,9 @@ void FileTransfer::pauseTransfer(const std::string& file_id)
     if (it != active_transfers_.end())
     {
         it->second.is_paused = true;
+        LOG_INFO << "Transfer paused for file ID: " << file_id;
+    } else {
+        LOG_ERROR << "Non-existent pause to transfer for file ID: " << file_id;
     }
 }
 
@@ -108,10 +111,13 @@ void FileTransfer::resumeTransfer(const std::string& file_id)
     if (it != active_transfers_.end())
     {
         it->second.is_paused = false;
+        LOG_INFO << "Transfer resumed for file ID: " << file_id;
         if (it->second.is_sending)
         {
             processNextChunk(file_id);
         }
+    } else {
+        LOG_ERROR << "Non-existent resume to transfer for file ID: " << file_id;
     }
 }
 
