@@ -8,7 +8,8 @@ std::shared_ptr<NetworkManager> NetworkManager::create()
 NetworkManager::NetworkManager() :
     work_(std::make_shared<io_context::work>(io_context_)),
     file_transfer_(
-        std::make_shared<FileTransfer>(std::make_shared<FileSystemManager>()))
+        std::make_shared<FileTransfer>(std::make_shared<FileSystemManager>())),
+    network_settings_()
 {
     file_transfer_->setChunkReadyCallback([this](const ChunkMessage& chunk) {
         auto it = findPeerByFileId(chunk.getFileId());
@@ -74,6 +75,7 @@ void NetworkManager::stop()
 void NetworkManager::connectToPeer(const std::string& address, uint16_t port)
 {
     auto new_connection = PeerConnection::create(io_context_);
+    new_connection->setNetworkSettings(network_settings_);
 
     new_connection->socket().async_connect(
         tcp::endpoint(boost::asio::ip::address::from_string(address), port),
@@ -148,6 +150,16 @@ void NetworkManager::setMessageHandler(
     }
 }
 
+void NetworkManager::updateNetworkSettings(const NetworkSettings& settings)
+{
+    network_settings_ = settings;
+
+    for (auto& peer : peers_)
+    {
+        peer.second->setNetworkSettings(network_settings_);
+    }
+}
+
 void NetworkManager::doAccept()
 {
     auto new_connection = PeerConnection::create(io_context_);
@@ -174,6 +186,7 @@ void NetworkManager::handleAccept(
             this->handleIncomingMessage(msg, peer_key);
         });
 
+        new_connection->setNetworkSettings(network_settings_);
         new_connection->start();
         doAccept();
     } else {

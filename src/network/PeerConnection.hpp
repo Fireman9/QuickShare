@@ -11,6 +11,7 @@
 #include "Message/FileMetadata.hpp"
 #include "Message/Message.hpp"
 #include "Message/TextMessage.hpp"
+#include "NetworkSettings.hpp"
 #include "logger.hpp"
 
 class PeerConnection : public std::enable_shared_from_this<PeerConnection>
@@ -28,6 +29,7 @@ class PeerConnection : public std::enable_shared_from_this<PeerConnection>
 
     void sendMessage(const Message& message);
     void setMessageHandler(MessageHandler handler);
+    void setNetworkSettings(const NetworkSettings& settings);
 
     tcp::socket& socket();
 
@@ -44,6 +46,8 @@ class PeerConnection : public std::enable_shared_from_this<PeerConnection>
     void doWrite();
     void handleWrite(const error_code& error);
 
+    void applyNetworkSettings();
+
     template <typename T>
     std::vector<uint8_t> serializeMessage(const T& message);
 
@@ -52,8 +56,10 @@ class PeerConnection : public std::enable_shared_from_this<PeerConnection>
     std::queue<std::vector<uint8_t>> write_queue_;
     MessageHandler                   message_handler_;
     bool                             is_writing_;
+    bool                             is_connected_;
     uint32_t                         message_length_;
     MessageType                      current_message_type_;
+    NetworkSettings                  network_settings_;
 
     static constexpr size_t MESSAGE_TYPE_SIZE = sizeof(MessageType);
     static constexpr size_t MESSAGE_LENGTH_SIZE = sizeof(uint32_t);

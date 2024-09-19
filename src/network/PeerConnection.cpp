@@ -6,18 +6,22 @@ std::shared_ptr<PeerConnection> PeerConnection::create(io_context& io_context)
 }
 
 PeerConnection::PeerConnection(io_context& io_context) :
-    socket_(io_context), is_writing_(false), message_length_(0)
+    socket_(io_context), is_writing_(false), message_length_(0),
+    is_connected_(false)
 {
     read_buffer_.resize(1024);
 }
 
 void PeerConnection::start()
 {
+    is_connected_ = true;
+    applyNetworkSettings();
     doRead();
 }
 
 void PeerConnection::stop()
 {
+    is_connected_ = false;
     error_code ec;
     socket_.close(ec);
 
@@ -42,9 +46,13 @@ void PeerConnection::sendMessage(const Message& message)
                 serializeMessage(static_cast<const FileMetadata&>(message));
             break;
         case MessageType::CHUNK:
+        {
             data_to_send =
                 serializeMessage(static_cast<const ChunkMessage&>(message));
+            network_settings_.updateBufferSizes(data_to_send.size());
+            applyNetworkSettings();
             break;
+        }
         case MessageType::CHUNK_METRICS:
             data_to_send =
                 serializeMessage(static_cast<const ChunkMetrics&>(message));
@@ -67,6 +75,15 @@ void PeerConnection::sendMessage(const Message& message)
 void PeerConnection::setMessageHandler(MessageHandler handler)
 {
     message_handler_ = std::move(handler);
+}
+
+void PeerConnection::setNetworkSettings(const NetworkSettings& settings)
+{
+    network_settings_ = settings;
+    if (is_connected_)
+    {
+        applyNetworkSettings();
+    }
 }
 
 boost::asio::ip::tcp::socket& PeerConnection::socket()
@@ -128,6 +145,13 @@ void PeerConnection::handleRead(const error_code& error,
         LOG_INFO << "Received message of type: "
                  << static_cast<int>(current_message_type_)
                  << ", size: " << bytes_transferred;
+
+        if (current_message_type_ == MessageType::CHUNK)
+        {
+            network_settings_.updateBufferSizes(bytes_transferred);
+            applyNetworkSettings();
+        }
+
         if (message_handler_)
         {
             processReceivedMessage();
@@ -203,5 +227,22 @@ void PeerConnection::handleWrite(const error_code& error)
     } else {
         LOG_ERROR << "Write error: " << error.message();
         stop();
+    }
+}
+
+void PeerConnection::applyNetworkSettings()
+{
+    if (!is_connected_)
+    {
+        LOG_ERROR << "Failed to apply network settings, not connected";
+        return;
+    }
+
+    try
+    {
+        network_settings_.applyToSocket(socket_);
+    } catch (const boost::system::system_error& e)
+    {
+        LOG_ERROR << "Failed to apply network settings: " << e.what();
     }
 }

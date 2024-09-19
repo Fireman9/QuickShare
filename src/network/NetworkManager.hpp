@@ -9,6 +9,7 @@
 
 #include "FileTransfer.hpp"
 #include "MessageHandler.hpp"
+#include "NetworkSettings.hpp"
 #include "PeerConnection.hpp"
 #include "logger.hpp"
 
@@ -36,6 +37,7 @@ class NetworkManager : public std::enable_shared_from_this<NetworkManager>
     double getFileTransferProgress(const std::string& file_id);
 
     void setMessageHandler(const MessageHandler::MessageCallback& handler);
+    void updateNetworkSettings(const NetworkSettings& settings);
 
   private:
     NetworkManager();
@@ -65,6 +67,7 @@ class NetworkManager : public std::enable_shared_from_this<NetworkManager>
     MessageHandler                    message_handler_;
     std::unordered_map<std::string, std::shared_ptr<PeerConnection>> peers_;
     std::shared_ptr<FileTransfer> file_transfer_;
+    NetworkSettings               network_settings_;
 };
 
 #endif // NETWORK_MANAGER_HPP
