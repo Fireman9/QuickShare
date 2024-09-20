@@ -156,6 +156,16 @@ double FileTransfer::getTransferProgress(const std::string& file_id) const
     return std::min(progress, 100.0);
 }
 
+size_t FileTransfer::getOptimalChunkSize(const std::string& file_id) const
+{
+    auto it = active_transfers_.find(file_id);
+    if (it != active_transfers_.end() && it->second.chunk_size_optimizer)
+    {
+        return it->second.chunk_size_optimizer->getOptimalChunkSize();
+    }
+    return MAX_CHUNK_SIZE;
+}
+
 void FileTransfer::setChunkReadyCallback(ChunkReadyCallback callback)
 {
     chunk_ready_callback_ = std::move(callback);

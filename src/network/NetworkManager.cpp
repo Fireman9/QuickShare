@@ -280,6 +280,14 @@ void NetworkManager::handleChunkMetrics(const ChunkMetrics& metrics,
 
     file_transfer_->handleChunkMetrics(metrics.getFileId(), metrics.getOffset(),
                                        metrics.getChunkSize(), latency);
+
+    size_t optimal_chunk_size =
+        file_transfer_->getOptimalChunkSize(metrics.getFileId());
+    network_settings_.updateBufferSizes(optimal_chunk_size);
+    for (auto& peer : peers_)
+    {
+        peer.second->setNetworkSettings(network_settings_);
+    }
 }
 
 std::string NetworkManager::getPeerKey(const tcp::endpoint& endpoint) const
