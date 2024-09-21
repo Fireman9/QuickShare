@@ -1,10 +1,11 @@
 #ifndef MAINWINDOW_HPP
 #define MAINWINDOW_HPP
 
+#include <QHBoxLayout>
 #include <QMainWindow>
-#include <QMessageBox>
-#include <QPushButton>
-#include <QVBoxLayout>
+
+#include "PeerInfoWidget.hpp"
+#include "PeerListWidget.hpp"
 
 class MainWindow : public QMainWindow
 {
@@ -12,12 +13,16 @@ class MainWindow : public QMainWindow
 
   public:
     MainWindow(QWidget* parent = nullptr);
+    ~MainWindow() = default;
 
   private slots:
-    void onButtonClicked();
+    void onPeerSelected(const QString& peerKey);
 
   private:
-    QPushButton* m_button;
+    void setupUi();
+
+    PeerListWidget* m_peerListWidget;
+    PeerInfoWidget* m_peerInfoWidget;
 };
 
 #endif // MAINWINDOW_HPP

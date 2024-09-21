@@ -1,23 +1,29 @@
 #include "MainWindow.hpp"
 
 MainWindow::MainWindow(QWidget* parent) :
-    QMainWindow(parent), m_button(new QPushButton("Click me!", this))
+    QMainWindow(parent), m_peerListWidget(new PeerListWidget(this)),
+    m_peerInfoWidget(new PeerInfoWidget(this))
 {
-    QWidget*     centralWidget = new QWidget(this);
-    QVBoxLayout* layout = new QVBoxLayout(centralWidget);
+    setupUi();
 
-    layout->addWidget(m_button);
-
-    setCentralWidget(centralWidget);
-
-    connect(m_button, &QPushButton::clicked, this,
-            &MainWindow::onButtonClicked);
-
-    setWindowTitle("QuickShare");
-    resize(300, 200);
+    connect(m_peerListWidget, &PeerListWidget::peerSelected, this,
+            &MainWindow::onPeerSelected);
 }
 
-void MainWindow::onButtonClicked()
+void MainWindow::setupUi()
 {
-    QMessageBox::information(this, "Hello", "Qt is working!");
+    QWidget*     centralWidget = new QWidget(this);
+    QHBoxLayout* mainLayout = new QHBoxLayout(centralWidget);
+
+    mainLayout->addWidget(m_peerListWidget);
+    mainLayout->addWidget(m_peerInfoWidget);
+
+    setCentralWidget(centralWidget);
+    setWindowTitle(tr("QuickShare"));
+    resize(800, 600);
+}
+
+void MainWindow::onPeerSelected(const QString& peerKey)
+{
+    m_peerInfoWidget->updatePeerInfo(peerKey);
 }
