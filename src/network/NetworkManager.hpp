@@ -39,6 +39,8 @@ class NetworkManager : public QObject,
     void setMessageHandler(const MessageHandler::MessageCallback& handler);
     void updateNetworkSettings(const NetworkSettings& settings);
 
+    uint16_t getCurrentPort();
+
   public slots:
     void startSendingFile(const QString& filePath, const QString& peerKey);
     void cancelFileTransfer(const QString& file_id);

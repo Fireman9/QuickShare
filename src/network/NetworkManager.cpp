@@ -48,9 +48,8 @@ void NetworkManager::start(uint16_t port)
             io_context_, tcp::endpoint(tcp::v4(), port));
         doAccept();
 
-        std::thread([this]() { io_context_.run(); }).detach();
-
         LOG_INFO(QString("NetworkManager started on port: %1").arg(port));
+        std::thread([this]() { io_context_.run(); }).detach();
     } catch (const std::exception& e)
     {
         LOG_ERROR(QString("Error starting NetworkManager: %1").arg(e.what()));
@@ -62,7 +61,17 @@ void NetworkManager::start(uint16_t port)
 void NetworkManager::stop()
 {
     work_.reset();
-    io_context_.stop();
+
+    if (acceptor_ && acceptor_->is_open())
+    {
+        boost::system::error_code ec;
+        acceptor_->close(ec);
+        if (ec)
+        {
+            LOG_ERROR(QString("Error closing acceptor: %1")
+                          .arg(ec.message().c_str()));
+        }
+    }
 
     for (auto& peer : peers_)
     {
@@ -70,10 +79,7 @@ void NetworkManager::stop()
     }
     peers_.clear();
 
-    if (acceptor_ && acceptor_->is_open())
-    {
-        acceptor_->close();
-    }
+    io_context_.stop();
 
     LOG_INFO("NetworkManager stopped");
 }
@@ -85,7 +91,13 @@ bool NetworkManager::changePort(uint16_t newPort)
         return true;
     }
 
+    // TODO:
+    // LOG_INFO << "Changing port from " << current_port_ << " to " << newPort;
+
     stop();
+
+    io_context_.restart();
+    work_ = std::make_shared<io_context::work>(io_context_);
 
     try
     {
@@ -195,14 +207,25 @@ void NetworkManager::updateNetworkSettings(const NetworkSettings& settings)
     }
 }
 
+uint16_t NetworkManager::getCurrentPort()
+{
+    return current_port_;
+}
+
 void NetworkManager::doAccept()
 {
     auto new_connection = PeerConnection::create(io_context_);
 
-    acceptor_->async_accept(new_connection->socket(),
-                            [this, new_connection](const error_code& error) {
-                                handleAccept(new_connection, error);
-                            });
+    if (acceptor_ && acceptor_->is_open())
+    {
+        acceptor_->async_accept(
+            new_connection->socket(),
+            [this, new_connection](const error_code& error) {
+                handleAccept(new_connection, error);
+            });
+    } else {
+        LOG_ERROR("Acceptor is not open, cannot accept new connections");
+    }
 }
 
 void NetworkManager::handleAccept(

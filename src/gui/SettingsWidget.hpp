@@ -15,6 +15,8 @@ class SettingsWidget : public QWidget
   public:
     explicit SettingsWidget(QWidget* parent = nullptr);
 
+    void setCurrentPort(quint16 port);
+
   signals:
     void applySettings(quint16 port);
 

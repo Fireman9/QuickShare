@@ -32,3 +32,8 @@ void SettingsWidget::onApplyClicked()
                              "Please enter a valid port number.");
     }
 }
+
+void SettingsWidget::setCurrentPort(quint16 port)
+{
+    m_portInput->setText(QString::number(port));
+}

@@ -30,7 +30,9 @@ MainWindow::MainWindow(QWidget* parent) :
     connect(m_settingsWidget, &SettingsWidget::applySettings, this,
             &MainWindow::onApplySettings);
 
-    m_networkManager->start(8080);
+    quint16 initialPort = 8080;
+    m_networkManager->start(initialPort);
+    m_settingsWidget->setCurrentPort(initialPort);
     m_settingsWidget->hide();
 }
 
@@ -72,5 +74,6 @@ void MainWindow::onApplySettings(quint16 port)
         QMessageBox::warning(
             this, "Error",
             "Failed to change port. Check if the port is available.");
+        m_settingsWidget->setCurrentPort(m_networkManager->getCurrentPort());
     }
 }
