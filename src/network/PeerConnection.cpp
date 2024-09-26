@@ -27,7 +27,8 @@ void PeerConnection::stop()
 
     if (ec)
     {
-        LOG_ERROR << "Error closing socket: " << ec.message();
+        LOG_ERROR(
+            QString("Error closing socket: %1").arg(ec.message().c_str()));
     }
 }
 
@@ -57,12 +58,12 @@ void PeerConnection::sendMessage(const Message& message)
             data_to_send =
                 serializeMessage(static_cast<const ChunkMetrics&>(message));
             break;
-        default: LOG_ERROR << "Unknown message type"; return;
+        default: LOG_ERROR("Unknown message type"); return;
     }
 
-    LOG_INFO << "Sending message of type: "
-             << static_cast<int>(message.getType())
-             << ", size: " << data_to_send.size();
+    LOG_INFO(QString("Sending message of type: %1, size: %2")
+                 .arg(static_cast<int>(message.getType()))
+                 .arg(data_to_send.size()));
 
     bool write_in_progress = !write_queue_.empty();
     write_queue_.push(std::move(data_to_send));
@@ -142,9 +143,9 @@ void PeerConnection::handleRead(const error_code& error,
 {
     if (!error)
     {
-        LOG_INFO << "Received message of type: "
-                 << static_cast<int>(current_message_type_)
-                 << ", size: " << bytes_transferred;
+        LOG_INFO(QString("Received message of type: %1, size: %2")
+                     .arg(static_cast<int>(current_message_type_))
+                     .arg(bytes_transferred));
 
         if (current_message_type_ == MessageType::CHUNK)
         {
@@ -158,7 +159,7 @@ void PeerConnection::handleRead(const error_code& error,
         }
         doRead();
     } else {
-        LOG_ERROR << "Read error: " << error.message();
+        LOG_ERROR(QString("Read error: %1").arg(error.message().c_str()));
         stop();
     }
 }
@@ -195,8 +196,8 @@ void PeerConnection::processReceivedMessage()
             break;
         }
         default:
-            LOG_ERROR << "Unknown message type received: "
-                      << static_cast<int>(current_message_type_);
+            LOG_ERROR(QString("Unknown message type received: %1")
+                          .arg(static_cast<int>(current_message_type_)));
             break;
     }
 }
@@ -225,7 +226,7 @@ void PeerConnection::handleWrite(const error_code& error)
         write_queue_.pop();
         doWrite();
     } else {
-        LOG_ERROR << "Write error: " << error.message();
+        LOG_ERROR(QString("Write error: %1").arg(error.message().c_str()));
         stop();
     }
 }
@@ -234,7 +235,7 @@ void PeerConnection::applyNetworkSettings()
 {
     if (!is_connected_)
     {
-        LOG_ERROR << "Failed to apply network settings, not connected";
+        LOG_ERROR("Failed to apply network settings, not connected");
         return;
     }
 
@@ -243,6 +244,7 @@ void PeerConnection::applyNetworkSettings()
         network_settings_.applyToSocket(socket_);
     } catch (const boost::system::system_error& e)
     {
-        LOG_ERROR << "Failed to apply network settings: " << e.what();
+        LOG_ERROR(
+            QString("Failed to apply network settings: %1").arg(e.what()));
     }
 }

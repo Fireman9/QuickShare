@@ -8,7 +8,7 @@
 
 #include <boost/crc.hpp>
 
-#include "logger.hpp"
+#include "Logger.hpp"
 
 class FileSystemManager
 {

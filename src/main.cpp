@@ -5,15 +5,18 @@
 
 #include <QApplication>
 
+#include "Logger.hpp"
 #include "MainWindow.hpp"
 #include "Message/TextMessage.hpp"
 #include "NetworkManager.hpp"
-// #include "logger.hpp"
 
 int main(int argc, char* argv[])
 {
-    // init_logging();
-    // LOG_INFO << "QuickShare started";
+    Logger::instance().setLogFile("QuickShare.log");
+    Logger::instance().setConsoleOutput(true);
+    Logger::instance().setLogLevel(Logger::LogLevel::Debug);
+
+    LOG_INFO("QuickShare started");
 
     QApplication a(argc, argv);
     MainWindow   w;

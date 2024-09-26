@@ -5,8 +5,8 @@
 #include <memory>
 #include <unordered_map>
 
+#include "Logger.hpp"
 #include "Message/Message.hpp"
-#include "logger.hpp"
 
 class MessageHandler
 {

@@ -10,6 +10,7 @@
 
 #include "ChunkSizeOptimizer.hpp"
 #include "FileSystemManager.hpp"
+#include "Logger.hpp"
 #include "Message/ChunkMessage.hpp"
 #include "Message/FileMetadata.hpp"
 

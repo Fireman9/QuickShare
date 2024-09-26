@@ -10,6 +10,7 @@
 #include <unordered_map>
 
 #include "FileTransfer.hpp"
+#include "Logger.hpp"
 #include "MessageHandler.hpp"
 #include "NetworkSettings.hpp"
 #include "PeerConnection.hpp"

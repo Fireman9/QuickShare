@@ -1,62 +1,46 @@
 #ifndef LOGGER_HPP
 #define LOGGER_HPP
 
-#include <boost/log/core.hpp>
-#include <boost/log/expressions.hpp>
-#include <boost/log/sources/severity_logger.hpp>
-#include <boost/log/support/date_time.hpp>
-#include <boost/log/trivial.hpp>
-#include <boost/log/utility/setup/common_attributes.hpp>
-#include <boost/log/utility/setup/console.hpp>
-#include <boost/log/utility/setup/file.hpp>
+#include <QDateTime>
+#include <QDebug>
+#include <QDir>
+#include <QFile>
+#include <QObject>
+#include <QString>
+#include <QTextStream>
 
-#define LOG_TRACE   BOOST_LOG_TRIVIAL(trace)
-#define LOG_DEBUG   BOOST_LOG_TRIVIAL(debug)
-#define LOG_INFO    BOOST_LOG_TRIVIAL(info)
-#define LOG_WARNING BOOST_LOG_TRIVIAL(warning)
-#define LOG_ERROR   BOOST_LOG_TRIVIAL(error)
-#define LOG_FATAL   BOOST_LOG_TRIVIAL(fatal)
-
-namespace logger = boost::log;
-namespace trivial = boost::log::trivial;
-namespace expr = boost::log::expressions;
-namespace attrs = boost::log::attributes;
-namespace keywords = boost::log::keywords;
-
-/// @brief Initializes the logging system with configurable severity level and
-/// output destinations.
-/// @param min_severity The minimum severity level for logging.
-/// @param log_to_file Whether to log to a file.
-/// @param log_to_console Whether to log to the console.
-inline void init_logging(trivial::severity_level min_severity = trivial::info,
-                         bool log_to_file = true, bool log_to_console = true)
+class Logger : public QObject
 {
-    logger::register_simple_formatter_factory<trivial::severity_level, char>(
-        "Severity");
+    Q_OBJECT
 
-    auto log_formatter =
-        expr::stream << "["
-                     << expr::format_date_time<boost::posix_time::ptime>(
-                            "TimeStamp", "%Y-%m-%d %H:%M:%S")
-                     << "] ["
-                     << expr::attr<attrs::current_thread_id::value_type>(
-                            "ThreadID")
-                     << "] [" << trivial::severity << "] " << expr::smessage;
+  public:
+    enum class LogLevel { Trace, Debug, Info, Warning, Error, Fatal };
 
-    if (log_to_file)
-    {
-        logger::add_file_log(keywords::file_name = "Quickshare_%N.log",
-                             keywords::format = log_formatter);
-    }
+    static Logger& instance();
 
-    if (log_to_console)
-    {
-        logger::add_console_log(std::cout, keywords::format = log_formatter);
-    }
+    void setLogFile(const QString& filename);
+    void setConsoleOutput(bool enable);
+    void setLogLevel(LogLevel level);
 
-    logger::core::get()->set_filter(trivial::severity >= min_severity);
+    void log(LogLevel level, const QString& message);
 
-    logger::add_common_attributes();
-}
+  private:
+    Logger();
+    ~Logger();
+
+    QString levelToString(LogLevel level);
+
+    QFile       m_logFile;
+    QTextStream m_logStream;
+    bool        m_consoleOutput;
+    LogLevel    m_logLevel;
+};
+
+#define LOG_TRACE(msg)   Logger::instance().log(Logger::LogLevel::Trace, msg)
+#define LOG_DEBUG(msg)   Logger::instance().log(Logger::LogLevel::Debug, msg)
+#define LOG_INFO(msg)    Logger::instance().log(Logger::LogLevel::Info, msg)
+#define LOG_WARNING(msg) Logger::instance().log(Logger::LogLevel::Warning, msg)
+#define LOG_ERROR(msg)   Logger::instance().log(Logger::LogLevel::Error, msg)
+#define LOG_FATAL(msg)   Logger::instance().log(Logger::LogLevel::Fatal, msg)
 
 #endif // LOGGER_HPP

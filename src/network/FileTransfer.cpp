@@ -9,7 +9,7 @@ void FileTransfer::startSending(const std::string& file_path,
 {
     if (!fs_manager_->fileExists(file_path))
     {
-        LOG_ERROR << "File does not exist: " << file_path;
+        LOG_ERROR(QString("File does not exist: %1").arg(file_path.c_str()));
         return;
     }
 
@@ -58,16 +58,16 @@ void FileTransfer::handleIncomingChunk(const ChunkMessage& chunk_msg)
     auto it = active_transfers_.find(chunk_msg.getFileId());
     if (it == active_transfers_.end())
     {
-        LOG_ERROR << "No active transfer for file ID: "
-                  << chunk_msg.getFileId();
+        LOG_ERROR(QString("No active transfer for file ID: %1")
+                      .arg(chunk_msg.getFileId().c_str()));
         return;
     }
 
     TransferInfo& info = it->second;
     if (info.is_sending)
     {
-        LOG_ERROR << "Received chunk for a file being sent: "
-                  << chunk_msg.getFileId();
+        LOG_ERROR(QString("Received chunk for a file being sent: %1")
+                      .arg(chunk_msg.getFileId().c_str()));
         return;
     }
 
@@ -99,9 +99,11 @@ void FileTransfer::pauseTransfer(const std::string& file_id)
     if (it != active_transfers_.end())
     {
         it->second.is_paused = true;
-        LOG_INFO << "Transfer paused for file ID: " << file_id;
+        LOG_INFO(
+            QString("Transfer paused for file ID: %1").arg(file_id.c_str()));
     } else {
-        LOG_ERROR << "Non-existent pause to transfer for file ID: " << file_id;
+        LOG_ERROR(QString("Non-existent pause to transfer for file ID: %1")
+                      .arg(file_id.c_str()));
     }
 }
 
@@ -111,13 +113,15 @@ void FileTransfer::resumeTransfer(const std::string& file_id)
     if (it != active_transfers_.end())
     {
         it->second.is_paused = false;
-        LOG_INFO << "Transfer resumed for file ID: " << file_id;
+        LOG_INFO(
+            QString("Transfer resumed for file ID: %1").arg(file_id.c_str()));
         if (it->second.is_sending)
         {
             processNextChunk(file_id);
         }
     } else {
-        LOG_ERROR << "Non-existent resume to transfer for file ID: " << file_id;
+        LOG_ERROR(QString("Non-existent resume to transfer for file ID: %1")
+                      .arg(file_id.c_str()));
     }
 }
 
@@ -150,15 +154,17 @@ double FileTransfer::getTransferProgress(const std::string& file_id) const
     auto it = active_transfers_.find(file_id);
     if (it == active_transfers_.end())
     {
-        LOG_WARNING << "Attempted to get progress for non-existent transfer: "
-                    << file_id;
+        LOG_WARNING(
+            QString("Attempted to get progress for non-existent transfer: %1")
+                .arg(file_id.c_str()));
         return 0.0;
     }
 
     const TransferInfo& info = it->second;
     if (info.file_size == 0)
     {
-        LOG_WARNING << "File size is 0 for transfer: " << file_id;
+        LOG_WARNING(
+            QString("File size is 0 for transfer: %1").arg(file_id.c_str()));
         return 0.0;
     }
 

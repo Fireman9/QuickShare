@@ -4,7 +4,7 @@
 #include <boost/asio.hpp>
 #include <cstdint>
 
-#include "logger.hpp"
+#include "Logger.hpp"
 
 using socket_base = boost::asio::socket_base;
 using tcp = boost::asio::ip::tcp;
@@ -57,35 +57,37 @@ class NetworkSettings
         socket.set_option(socket_base::send_buffer_size(send_buffer_size_), ec);
         if (ec)
         {
-            LOG_WARNING << "Failed to set send buffer size: " << ec.message();
+            LOG_WARNING(QString("Failed to set send buffer size: %1")
+                            .arg(ec.message().c_str()));
         }
 
         socket.set_option(
             socket_base::receive_buffer_size(receive_buffer_size_), ec);
         if (ec)
         {
-            LOG_WARNING << "Failed to set receive buffer size: "
-                        << ec.message();
+            LOG_WARNING(QString("Failed to set receive buffer size: %1")
+                            .arg(ec.message().c_str()));
         }
 
         socket.set_option(tcp::no_delay(disable_nagle_), ec);
         if (ec)
         {
-            LOG_WARNING << "Failed to set TCP no delay option: "
-                        << ec.message();
+            LOG_WARNING(QString("Failed to set TCP no delay option: %1")
+                            .arg(ec.message().c_str()));
         }
 
         socket.set_option(socket_base::keep_alive(keep_alive_), ec);
         if (ec)
         {
-            LOG_WARNING << "Failed to set keep alive option: " << ec.message();
+            LOG_WARNING(QString("Failed to set keep alive option: %1")
+                            .arg(ec.message().c_str()));
         }
 
         socket.set_option(socket_base::reuse_address(reuse_address_), ec);
         if (ec)
         {
-            LOG_WARNING << "Failed to set reuse address option: "
-                        << ec.message();
+            LOG_WARNING(QString("Failed to set reuse address option: %1")
+                            .arg(ec.message().c_str()));
         }
     }
 

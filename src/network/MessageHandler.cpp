@@ -12,6 +12,6 @@ void MessageHandler::handleMessage(const Message& message)
     {
         it->second(message);
     } else {
-        LOG_ERROR << "No handler registered for message type";
+        LOG_ERROR("No handler registered for message type");
     }
 }

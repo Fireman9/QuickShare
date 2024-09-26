@@ -11,7 +11,7 @@ std::uintmax_t FileSystemManager::getFileSize(const fs::path& file_path) const
 {
     if (!fileExists(file_path))
     {
-        LOG_ERROR << "File does not exist: " << file_path;
+        LOG_ERROR(QString("File does not exist: %1").arg(file_path.c_str()));
         return 0;
     }
     return fs::file_size(file_path);
@@ -22,14 +22,14 @@ FileSystemManager::calculateFileHash(const fs::path& file_path) const
 {
     if (!fileExists(file_path))
     {
-        LOG_ERROR << "File does not exist: " << file_path;
+        LOG_ERROR(QString("File does not exist: %1").arg(file_path.c_str()));
         return "";
     }
 
     std::ifstream file(file_path, std::ios::binary);
     if (!file)
     {
-        LOG_ERROR << "Unable to open file: " << file_path;
+        LOG_ERROR(QString("Unable to open file: %1").arg(file_path.c_str()));
         return "";
     }
 
@@ -52,7 +52,7 @@ std::vector<uint8_t> FileSystemManager::readChunk(const fs::path& file_path,
     std::ifstream file(file_path, std::ios::binary);
     if (!file)
     {
-        LOG_ERROR << "Unable to open file: " << file_path;
+        LOG_ERROR(QString("Unable to open file: %1").arg(file_path.c_str()));
         return {};
     }
 
@@ -72,7 +72,7 @@ void FileSystemManager::writeChunk(const fs::path&             file_path,
                       std::ios::binary | std::ios::in | std::ios::out);
     if (!file)
     {
-        LOG_ERROR << "Unable to open file: " << file_path;
+        LOG_ERROR(QString("Unable to open file: %1").arg(file_path.c_str()));
         return;
     }
 
@@ -81,7 +81,7 @@ void FileSystemManager::writeChunk(const fs::path&             file_path,
 
     if (!file)
     {
-        LOG_ERROR << "Error writing to file: " << file_path;
+        LOG_ERROR(QString("Error writing to file: %1").arg(file_path.c_str()));
     }
 }
 
@@ -91,7 +91,7 @@ void FileSystemManager::createFile(const fs::path& file_path,
     std::ofstream file(file_path, std::ios::binary);
     if (!file)
     {
-        LOG_ERROR << "Unable to create file: " << file_path;
+        LOG_ERROR(QString("Unable to create file: %1").arg(file_path.c_str()));
         return;
     }
 
@@ -100,7 +100,7 @@ void FileSystemManager::createFile(const fs::path& file_path,
 
     if (!file)
     {
-        LOG_ERROR << "Error creating file: " << file_path;
+        LOG_ERROR(QString("Error creating file: %1").arg(file_path.c_str()));
     }
 }
 
@@ -109,8 +109,9 @@ void FileSystemManager::deleteFile(const fs::path& file_path)
     std::error_code ec;
     if (!fs::remove(file_path, ec))
     {
-        LOG_ERROR << "Unable to delete file: " << file_path
-                  << ". Error: " << ec.message();
+        LOG_ERROR(QString("Unable to delete file: %1. Error: %2")
+                      .arg(file_path.c_str())
+                      .arg(ec.message().c_str()));
     }
 }
 
@@ -125,7 +126,7 @@ std::fstream FileSystemManager::openFile(const fs::path&         file_path,
     std::fstream file(file_path, mode);
     if (!file)
     {
-        LOG_ERROR << "Unable to open file: " << file_path;
+        LOG_ERROR(QString("Unable to open file: %1").arg(file_path.c_str()));
     }
     return file;
 }

@@ -6,13 +6,13 @@
 #include <memory>
 #include <queue>
 
+#include "Logger.hpp"
 #include "Message/ChunkMessage.hpp"
 #include "Message/ChunkMetrics.hpp"
 #include "Message/FileMetadata.hpp"
 #include "Message/Message.hpp"
 #include "Message/TextMessage.hpp"
 #include "NetworkSettings.hpp"
-#include "logger.hpp"
 
 class PeerConnection : public std::enable_shared_from_this<PeerConnection>
 {
