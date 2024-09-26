@@ -5,13 +5,16 @@
 
 #include <QApplication>
 
+#include "MainWindow.hpp"
 #include "Message/TextMessage.hpp"
 #include "NetworkManager.hpp"
-#include "gui/MainWindow.hpp"
 #include "logger.hpp"
 
 int main(int argc, char* argv[])
 {
+    init_logging();
+    LOG_INFO << "QuickShare started";
+
     QApplication a(argc, argv);
     MainWindow   w;
     w.show();

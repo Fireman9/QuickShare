@@ -6,7 +6,7 @@ std::shared_ptr<NetworkManager> NetworkManager::create()
 }
 
 NetworkManager::NetworkManager() :
-    work_(std::make_shared<io_context::work>(io_context_)),
+    QObject(), work_(std::make_shared<io_context::work>(io_context_)),
     file_transfer_(
         std::make_shared<FileTransfer>(std::make_shared<FileSystemManager>())),
     network_settings_()
@@ -34,6 +34,8 @@ NetworkManager::NetworkManager() :
                      << " for file ID: " << file_id;
             // TODO: add more logic here
         });
+
+    startProgressUpdateTimer();
 }
 
 void NetworkManager::start(uint16_t port)
@@ -51,6 +53,8 @@ void NetworkManager::start(uint16_t port)
     {
         LOG_ERROR << "Error starting NetworkManager: " << e.what();
     }
+
+    startProgressUpdateTimer();
 }
 
 void NetworkManager::stop()
@@ -105,35 +109,42 @@ void NetworkManager::sendMessage(const Message&     message,
     }
 }
 
-void NetworkManager::startSendingFile(const std::string& file_path,
-                                      const std::string& peer_key)
+void NetworkManager::startSendingFile(const QString& filePath,
+                                      const QString& peerKey)
 {
-    LOG_INFO << "Starting to send file: " << file_path
-             << " to peer: " << peer_key;
-    file_transfer_->startSending(file_path, peer_key);
+    LOG_INFO << "Starting to send file: " << filePath.toStdString()
+             << " to peer: " << peerKey.toStdString();
+    file_transfer_->startSending(filePath.toStdString(), peerKey.toStdString());
 }
 
-void NetworkManager::cancelFileTransfer(const std::string& file_id)
+void NetworkManager::cancelFileTransfer(const QString& file_id)
 {
-    LOG_INFO << "Cancelling file transfer for file ID: " << file_id;
-    file_transfer_->cancelTransfer(file_id);
+    LOG_INFO << "Cancelling file transfer for file ID: "
+             << file_id.toStdString();
+    file_transfer_->cancelTransfer(file_id.toStdString());
 }
 
-void NetworkManager::pauseFileTransfer(const std::string& file_id)
+void NetworkManager::pauseFileTransfer(const QString& file_id)
 {
-    LOG_INFO << "Pausing file transfer for file ID: " << file_id;
-    file_transfer_->pauseTransfer(file_id);
+    LOG_INFO << "Pausing file transfer for file ID: " << file_id.toStdString();
+    file_transfer_->pauseTransfer(file_id.toStdString());
 }
 
-void NetworkManager::resumeFileTransfer(const std::string& file_id)
+void NetworkManager::resumeFileTransfer(const QString& file_id)
 {
-    LOG_INFO << "Resuming file transfer for file ID: " << file_id;
-    file_transfer_->resumeTransfer(file_id);
+    LOG_INFO << "Resuming file transfer for file ID: " << file_id.toStdString();
+    file_transfer_->resumeTransfer(file_id.toStdString());
 }
 
-double NetworkManager::getFileTransferProgress(const std::string& file_id)
+void NetworkManager::updateFileTransferProgress()
 {
-    return file_transfer_->getTransferProgress(file_id);
+    auto active_transfers = file_transfer_->getActiveTransfers();
+    for (const auto& transfer : active_transfers)
+    {
+        double progress = file_transfer_->getTransferProgress(transfer);
+        emit   fileTransferProgressUpdated(QString::fromStdString(transfer),
+                                           progress);
+    }
 }
 
 void NetworkManager::setMessageHandler(
@@ -288,6 +299,14 @@ void NetworkManager::handleChunkMetrics(const ChunkMetrics& metrics,
     {
         peer.second->setNetworkSettings(network_settings_);
     }
+}
+
+void NetworkManager::startProgressUpdateTimer()
+{
+    progress_update_timer_ = new QTimer(this);
+    connect(progress_update_timer_, &QTimer::timeout, this,
+            &NetworkManager::updateFileTransferProgress);
+    progress_update_timer_->start(500);
 }
 
 std::string NetworkManager::getPeerKey(const tcp::endpoint& endpoint) const

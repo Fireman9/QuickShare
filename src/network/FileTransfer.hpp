@@ -31,6 +31,7 @@ class FileTransfer
     void resumeTransfer(const std::string& file_id);
     void cancelTransfer(const std::string& file_id);
 
+    std::vector<std::string> getActiveTransfers() const;
     double getTransferProgress(const std::string& file_id) const;
     size_t getOptimalChunkSize(const std::string& file_id) const;
 

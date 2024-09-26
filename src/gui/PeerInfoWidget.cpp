@@ -5,12 +5,18 @@ PeerInfoWidget::PeerInfoWidget(QWidget* parent) :
     m_selectedFileLabel(new QLabel("No file selected", this)),
     m_selectFileButton(new QPushButton("Select File", this)),
     m_transferProgressBar(new QProgressBar(this)),
-    m_layout(new QVBoxLayout(this))
+    m_layout(new QVBoxLayout(this)),
+    m_fileTransferManager(new FileTransferManager(this))
 {
     setupUi();
 
     connect(m_selectFileButton, &QPushButton::clicked, this,
             &PeerInfoWidget::onSelectFileClicked);
+}
+
+FileTransferManager* PeerInfoWidget::getFileTransferManager() const
+{
+    return m_fileTransferManager;
 }
 
 void PeerInfoWidget::setupUi()
@@ -52,18 +58,18 @@ void PeerInfoWidget::onSelectFileClicked()
     }
 }
 
-void PeerInfoWidget::updateTransferProgress(int progress)
+void PeerInfoWidget::updateTransferProgress(const QString& fileId,
+                                            double         progress)
 {
-    m_transferProgressBar->setValue(progress);
+    if (fileId == m_currentFileId)
+    {
+        m_transferProgressBar->setValue(static_cast<int>(progress * 100));
+    }
 }
 
 void PeerInfoWidget::initiateFileTransfer(const QString& filePath)
 {
-    // TODO: Implement file transfer initiation
-    // This method should interact with NetworkManager class to start the actual
-    // file transfer process. For now, just show a message box.
-    QMessageBox::information(
-        this, "File Transfer",
-        "Initiating transfer of file: " + QFileInfo(filePath).fileName() +
-            "\nTo peer: " + m_currentPeerKey);
+    m_fileTransferManager->initiateFileTransfer(filePath, m_currentPeerKey);
+    m_currentFileId = QFileInfo(filePath).fileName() + "_" + m_currentPeerKey;
+    m_transferProgressBar->setValue(0);
 }

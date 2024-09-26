@@ -9,6 +9,8 @@
 #include <QVBoxLayout>
 #include <QWidget>
 
+#include "FileTransferManager.hpp"
+
 class PeerInfoWidget : public QWidget
 {
     Q_OBJECT
@@ -16,9 +18,11 @@ class PeerInfoWidget : public QWidget
   public:
     explicit PeerInfoWidget(QWidget* parent = nullptr);
 
+    FileTransferManager* getFileTransferManager() const;
+
   public slots:
     void updatePeerInfo(const QString& peerKey);
-    void updateTransferProgress(int progress);
+    void updateTransferProgress(const QString& fileId, double progress);
 
   private slots:
     void onSelectFileClicked();
@@ -31,6 +35,9 @@ class PeerInfoWidget : public QWidget
     QVBoxLayout*  m_layout;
 
     QString m_currentPeerKey;
+    QString m_currentFileId;
+
+    FileTransferManager* m_fileTransferManager;
 
     void setupUi();
     void initiateFileTransfer(const QString& filePath);

@@ -6,6 +6,7 @@
 
 #include "PeerInfoWidget.hpp"
 #include "PeerListWidget.hpp"
+#include "NetworkManager.hpp"
 
 class MainWindow : public QMainWindow
 {
@@ -21,8 +22,9 @@ class MainWindow : public QMainWindow
   private:
     void setupUi();
 
-    PeerListWidget* m_peerListWidget;
-    PeerInfoWidget* m_peerInfoWidget;
+    PeerListWidget*                 m_peerListWidget;
+    PeerInfoWidget*                 m_peerInfoWidget;
+    std::shared_ptr<NetworkManager> m_networkManager;
 };
 
 #endif // MAINWINDOW_HPP

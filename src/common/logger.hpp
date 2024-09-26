@@ -1,5 +1,5 @@
-#ifndef __LOGGER_HPP__
-#define __LOGGER_HPP__
+#ifndef LOGGER_HPP
+#define LOGGER_HPP
 
 #include <boost/log/core.hpp>
 #include <boost/log/expressions.hpp>
@@ -59,4 +59,4 @@ inline void init_logging(trivial::severity_level min_severity = trivial::info,
     logger::add_common_attributes();
 }
 
-#endif // __LOGGER_HPP__
+#endif // LOGGER_HPP

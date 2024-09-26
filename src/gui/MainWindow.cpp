@@ -2,12 +2,25 @@
 
 MainWindow::MainWindow(QWidget* parent) :
     QMainWindow(parent), m_peerListWidget(new PeerListWidget(this)),
-    m_peerInfoWidget(new PeerInfoWidget(this))
+    m_peerInfoWidget(new PeerInfoWidget(this)),
+    m_networkManager(NetworkManager::create())
 {
     setupUi();
 
     connect(m_peerListWidget, &PeerListWidget::peerSelected, this,
             &MainWindow::onPeerSelected);
+
+    // Connect FileTransferManager signals to NetworkManager slots
+    connect(m_peerInfoWidget->getFileTransferManager(),
+            &FileTransferManager::fileTransferInitiated, m_networkManager.get(),
+            &NetworkManager::startSendingFile);
+
+    // Connect NetworkManager signals to PeerInfoWidget slots
+    connect(m_networkManager.get(),
+            &NetworkManager::fileTransferProgressUpdated, m_peerInfoWidget,
+            &PeerInfoWidget::updateTransferProgress);
+
+    m_networkManager->start(8080);
 }
 
 void MainWindow::setupUi()
