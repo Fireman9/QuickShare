@@ -4,7 +4,7 @@ set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
 
 # Qt libs
-set(QT_TOP_INCLUDE_LIBRARIES Widgets)
+set(QT_TOP_INCLUDE_LIBRARIES Core Gui Widgets)
 
 # Find packages
 find_package(Qt6 REQUIRED COMPONENTS ${QT_TOP_INCLUDE_LIBRARIES})
@@ -19,7 +19,7 @@ add_executable(main_executable main.cpp)
 
 # Library linking
 list(TRANSFORM QT_TOP_INCLUDE_LIBRARIES PREPEND "Qt6::")
-target_link_libraries(main_executable PRIVATE
+target_link_libraries(main_executable PUBLIC
     common
     network
     gui

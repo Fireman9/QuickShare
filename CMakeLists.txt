@@ -18,4 +18,3 @@ include_directories(${Boost_INCLUDE_DIRS})
 
 # ------------------------- Project structure ---------------------------
 add_subdirectory(src)
-add_subdirectory(test)

@@ -26,7 +26,7 @@ target_include_directories(gui PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 # Library linking
 list(TRANSFORM QT_INCLUDE_LIBRARIES PREPEND "Qt6::")
-target_link_libraries(gui PRIVATE
+target_link_libraries(gui PUBLIC
     common
     network
     ${QT_INCLUDE_LIBRARIES}
