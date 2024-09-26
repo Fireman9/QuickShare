@@ -13,7 +13,6 @@
 #include "MessageHandler.hpp"
 #include "NetworkSettings.hpp"
 #include "PeerConnection.hpp"
-#include "logger.hpp"
 
 class NetworkManager : public QObject,
                        public std::enable_shared_from_this<NetworkManager>
@@ -29,6 +28,7 @@ class NetworkManager : public QObject,
 
     void start(uint16_t port);
     void stop();
+    bool changePort(uint16_t newPort);
 
     void connectToPeer(const std::string& address, uint16_t port);
     void broadcastMessage(const Message& message);
@@ -46,6 +46,7 @@ class NetworkManager : public QObject,
 
   signals:
     void fileTransferProgressUpdated(const QString& fileId, double progress);
+    void portChanged(uint16_t newPort);
 
   private:
     NetworkManager();
@@ -80,6 +81,7 @@ class NetworkManager : public QObject,
     std::shared_ptr<FileTransfer> file_transfer_;
     NetworkSettings               network_settings_;
     QTimer*                       progress_update_timer_;
+    uint16_t                      current_port_;
 };
 
 #endif // NETWORK_MANAGER_HPP

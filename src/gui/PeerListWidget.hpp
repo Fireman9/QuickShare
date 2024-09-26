@@ -4,6 +4,7 @@
 #include <QInputDialog>
 #include <QListWidget>
 #include <QPushButton>
+#include <QStringList>
 #include <QVBoxLayout>
 #include <QWidget>
 
@@ -16,6 +17,7 @@ class PeerListWidget : public QWidget
 
   signals:
     void peerSelected(const QString& peerKey);
+    void peerAdded(const QString& address, quint16 port);
 
   private slots:
     void onAddPeerClicked();

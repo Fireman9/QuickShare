@@ -49,4 +49,12 @@ void PeerListWidget::addPeer(const QString& peerKey)
     }
 
     m_peerList->addItem(peerKey);
+
+    QStringList parts = peerKey.split(":");
+    if (parts.size() == 2)
+    {
+        QString address = parts[0];
+        quint16 port = parts[1].toUShort();
+        emit    peerAdded(address, port);
+    }
 }

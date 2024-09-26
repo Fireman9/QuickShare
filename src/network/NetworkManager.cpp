@@ -9,7 +9,7 @@ NetworkManager::NetworkManager() :
     QObject(), work_(std::make_shared<io_context::work>(io_context_)),
     file_transfer_(
         std::make_shared<FileTransfer>(std::make_shared<FileSystemManager>())),
-    network_settings_()
+    network_settings_(), current_port_(8080)
 {
     file_transfer_->setChunkReadyCallback([this](const ChunkMessage& chunk) {
         auto it = findPeerByFileId(chunk.getFileId());
@@ -30,8 +30,9 @@ NetworkManager::NetworkManager() :
 
     file_transfer_->setTransferCompleteCallback(
         [this](const std::string& file_id, bool success) {
-            LOG_INFO << "File transfer " << (success ? "completed" : "failed")
-                     << " for file ID: " << file_id;
+            // LOG_INFO << "File transfer " << (success ? "completed" :
+            // "failed")
+            //          << " for file ID: " << file_id;
             // TODO: add more logic here
         });
 
@@ -40,18 +41,17 @@ NetworkManager::NetworkManager() :
 
 void NetworkManager::start(uint16_t port)
 {
+    current_port_ = port;
     try
     {
         acceptor_ = std::make_unique<tcp::acceptor>(
             io_context_, tcp::endpoint(tcp::v4(), port));
         doAccept();
 
-        LOG_INFO << "NetworkManager started on port " << port;
-
         std::thread([this]() { io_context_.run(); }).detach();
     } catch (const std::exception& e)
     {
-        LOG_ERROR << "Error starting NetworkManager: " << e.what();
+        // LOG_ERROR << "Error starting NetworkManager: " << e.what();
     }
 
     startProgressUpdateTimer();
@@ -73,7 +73,29 @@ void NetworkManager::stop()
         acceptor_->close();
     }
 
-    LOG_INFO << "NetworkManager stopped";
+    // LOG_INFO << "NetworkManager stopped";
+}
+
+bool NetworkManager::changePort(uint16_t newPort)
+{
+    if (newPort == current_port_)
+    {
+        return true;
+    }
+
+    stop();
+
+    try
+    {
+        start(newPort);
+        emit portChanged(newPort);
+        return true;
+    } catch (const std::exception& e)
+    {
+        // LOG_ERROR << "Error changing port: " << e.what();
+        start(current_port_);
+        return false;
+    }
 }
 
 void NetworkManager::connectToPeer(const std::string& address, uint16_t port)
@@ -102,37 +124,39 @@ void NetworkManager::sendMessage(const Message&     message,
     auto it = peers_.find(peer_key);
     if (it != peers_.end())
     {
-        LOG_INFO << "Sending message to peer: " << peer_key;
+        // LOG_INFO << "Sending message to peer: " << peer_key;
         it->second->sendMessage(message);
     } else {
-        LOG_ERROR << "Peer: " << peer_key << ", not found";
+        // LOG_ERROR << "Peer: " << peer_key << ", not found";
     }
 }
 
 void NetworkManager::startSendingFile(const QString& filePath,
                                       const QString& peerKey)
 {
-    LOG_INFO << "Starting to send file: " << filePath.toStdString()
-             << " to peer: " << peerKey.toStdString();
+    // LOG_INFO << "Starting to send file: " << filePath.toStdString()
+    //          << " to peer: " << peerKey.toStdString();
     file_transfer_->startSending(filePath.toStdString(), peerKey.toStdString());
 }
 
 void NetworkManager::cancelFileTransfer(const QString& file_id)
 {
-    LOG_INFO << "Cancelling file transfer for file ID: "
-             << file_id.toStdString();
+    // LOG_INFO << "Cancelling file transfer for file ID: "
+    //          << file_id.toStdString();
     file_transfer_->cancelTransfer(file_id.toStdString());
 }
 
 void NetworkManager::pauseFileTransfer(const QString& file_id)
 {
-    LOG_INFO << "Pausing file transfer for file ID: " << file_id.toStdString();
+    // LOG_INFO << "Pausing file transfer for file ID: " <<
+    // file_id.toStdString();
     file_transfer_->pauseTransfer(file_id.toStdString());
 }
 
 void NetworkManager::resumeFileTransfer(const QString& file_id)
 {
-    LOG_INFO << "Resuming file transfer for file ID: " << file_id.toStdString();
+    // LOG_INFO << "Resuming file transfer for file ID: " <<
+    // file_id.toStdString();
     file_transfer_->resumeTransfer(file_id.toStdString());
 }
 
@@ -186,8 +210,8 @@ void NetworkManager::handleAccept(
 {
     if (!error)
     {
-        LOG_INFO << "New connection accepted from "
-                 << new_connection->socket().remote_endpoint();
+        // LOG_INFO << "New connection accepted from "
+        //          << new_connection->socket().remote_endpoint();
 
         std::string peer_key =
             getPeerKey(new_connection->socket().remote_endpoint());
@@ -201,7 +225,7 @@ void NetworkManager::handleAccept(
         new_connection->start();
         doAccept();
     } else {
-        LOG_ERROR << "Error accepting new connection: " << error.message();
+        // LOG_ERROR << "Error accepting new connection: " << error.message();
     }
 }
 
@@ -210,8 +234,8 @@ void NetworkManager::handleConnect(
 {
     if (!error)
     {
-        LOG_INFO << "Connected to peer "
-                 << new_connection->socket().remote_endpoint();
+        // LOG_INFO << "Connected to peer "
+        //          << new_connection->socket().remote_endpoint();
 
         std::string peer_key =
             getPeerKey(new_connection->socket().remote_endpoint());
@@ -223,7 +247,7 @@ void NetworkManager::handleConnect(
 
         new_connection->start();
     } else {
-        LOG_ERROR << "Error connecting to peer: " << error.message();
+        // LOG_ERROR << "Error connecting to peer: " << error.message();
     }
 }
 
@@ -245,23 +269,23 @@ void NetworkManager::handleIncomingMessage(const Message&     message,
             handleChunkMetrics(static_cast<const ChunkMetrics&>(message),
                                peer_key);
             break;
-        default: LOG_ERROR << "Unknown message type received";
+            // default: LOG_ERROR << "Unknown message type received";
     }
 }
 
 void NetworkManager::handleFileMetadata(const FileMetadata& metadata,
                                         const std::string&  peer_key)
 {
-    LOG_INFO << "Received file metadata for file: " << metadata.getFileName()
-             << " from peer: " << peer_key;
+    // LOG_INFO << "Received file metadata for file: " << metadata.getFileName()
+    //          << " from peer: " << peer_key;
     file_transfer_->startReceiving(metadata);
 }
 
 void NetworkManager::handleChunkMessage(const ChunkMessage& chunk_msg,
                                         const std::string&  peer_key)
 {
-    LOG_INFO << "Received chunk with offset " << chunk_msg.getOffset()
-             << " for file ID: " << chunk_msg.getFileId();
+    // LOG_INFO << "Received chunk with offset " << chunk_msg.getOffset()
+    //          << " for file ID: " << chunk_msg.getFileId();
     file_transfer_->handleIncomingChunk(chunk_msg);
 
     ChunkMetrics metrics(chunk_msg.getFileId(), chunk_msg.getOffset(),
@@ -272,7 +296,7 @@ void NetworkManager::handleChunkMessage(const ChunkMessage& chunk_msg,
     {
         it->second->sendMessage(metrics);
     } else {
-        LOG_ERROR << "Peer not found for sending chunk metrics";
+        // LOG_ERROR << "Peer not found for sending chunk metrics";
     }
 }
 
@@ -284,10 +308,11 @@ void NetworkManager::handleChunkMetrics(const ChunkMetrics& metrics,
     auto latency = std::chrono::duration_cast<std::chrono::microseconds>(
         current_time - received_time);
 
-    LOG_INFO << "Received metrics for chunk with offset " << metrics.getOffset()
-             << " of file ID: " << metrics.getFileId()
-             << ", size: " << metrics.getChunkSize() << " bytes"
-             << ", latency: " << latency.count() << " microseconds";
+    // LOG_INFO << "Received metrics for chunk with offset " <<
+    // metrics.getOffset()
+    //          << " of file ID: " << metrics.getFileId()
+    //          << ", size: " << metrics.getChunkSize() << " bytes"
+    //          << ", latency: " << latency.count() << " microseconds";
 
     file_transfer_->handleChunkMetrics(metrics.getFileId(), metrics.getOffset(),
                                        metrics.getChunkSize(), latency);
