@@ -48,7 +48,6 @@ MainWindow::MainWindow(QWidget* parent) :
     m_myPortLabel->setText(QString("My port: %1").arg(initialPort));
     m_settingsWidget->hide();
 
-    // Initialize progress bar to 0%
     m_progressBar->setValue(0);
 }
 
@@ -179,13 +178,12 @@ void MainWindow::updateFileInfo()
     {
         QFileInfo fileInfo(m_selectedFilePath);
         QString   dirPath = fileInfo.dir().path();
-        m_fileSelectionLabel->setText(
-            QString("Name: %1\nPath: %2\nSize: %3 bytes")
-                .arg(fileInfo.fileName())
-                .arg(dirPath)
-                .arg(fileInfo.size()));
+        QString   formattedSize = formatFileSize(fileInfo.size());
+        m_fileSelectionLabel->setText(QString("Name: %1\nPath: %2\nSize: %3")
+                                          .arg(fileInfo.fileName())
+                                          .arg(dirPath)
+                                          .arg(formattedSize));
 
-        // Set font size to 12 and align text to the left for selected file
         QFont fileFont = m_fileSelectionLabel->font();
         fileFont.setPointSize(12);
         m_fileSelectionLabel->setFont(fileFont);
@@ -193,8 +191,7 @@ void MainWindow::updateFileInfo()
     } else {
         m_fileSelectionLabel->setText("Select file");
         m_fileSelectionLabel->setAlignment(Qt::AlignCenter);
-        m_fileSelectionLabel->setFont(
-            QApplication::font()); // Reset to default font
+        m_fileSelectionLabel->setFont(QApplication::font());
     }
 }
 
@@ -215,4 +212,19 @@ void MainWindow::onSendFileClicked()
 
     m_networkManager->startSendingFile(m_selectedFilePath, peerKey);
     m_progressBar->setValue(0);
+}
+
+QString MainWindow::formatFileSize(qint64 bytes)
+{
+    const char* units[] = {"b", "Kb", "Mb", "Gb", "Tb"};
+    int         unitIndex = 0;
+    double      size = static_cast<double>(bytes);
+
+    while (size >= 1024.0 && unitIndex < 4)
+    {
+        size /= 1024.0;
+        unitIndex++;
+    }
+
+    return QString("%1 %2").arg(size, 0, 'f', 2).arg(units[unitIndex]);
 }

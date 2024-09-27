@@ -37,8 +37,9 @@ class MainWindow : public QMainWindow
     void onSendFileClicked();
 
   private:
-    void setupUi();
-    void updateFileInfo();
+    void    setupUi();
+    void    updateFileInfo();
+    QString formatFileSize(qint64 bytes);
 
     PeerListWidget*                 m_peerListWidget;
     std::shared_ptr<NetworkManager> m_networkManager;
