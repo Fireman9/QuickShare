@@ -1,6 +1,8 @@
 #ifndef PEER_LIST_WIDGET_HPP
 #define PEER_LIST_WIDGET_HPP
 
+#include <QApplication>
+#include <QFont>
 #include <QInputDialog>
 #include <QListWidget>
 #include <QPushButton>
@@ -30,6 +32,7 @@ class PeerListWidget : public QWidget
 
     void setupUi();
     void addPeer(const QString& peerKey);
+    void updateMinimumWidth();
 };
 
 #endif // PEER_LIST_WIDGET_HPP
