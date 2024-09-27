@@ -18,6 +18,9 @@ int main(int argc, char* argv[])
 
     LOG_INFO("QuickShare started");
 
+    QFont robotoFont("Roboto", 14);
+    QApplication::setFont(robotoFont);
+
     QApplication a(argc, argv);
     MainWindow   w;
     w.show();
