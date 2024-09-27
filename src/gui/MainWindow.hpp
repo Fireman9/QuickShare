@@ -1,9 +1,16 @@
 #ifndef MAINWINDOW_HPP
 #define MAINWINDOW_HPP
 
+#include <QApplication>
+#include <QDir>
+#include <QFileDialog>
+#include <QFont>
+#include <QFontDatabase>
 #include <QHBoxLayout>
+#include <QIcon>
 #include <QLabel>
 #include <QMainWindow>
+#include <QMessageBox>
 #include <QProgressBar>
 #include <QPushButton>
 #include <QSpacerItem>

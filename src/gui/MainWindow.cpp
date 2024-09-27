@@ -1,6 +1,4 @@
 #include "MainWindow.hpp"
-#include <QFileDialog>
-#include <QMessageBox>
 
 MainWindow::MainWindow(QWidget* parent) :
     QMainWindow(parent), m_peerListWidget(new PeerListWidget(this)),
@@ -15,7 +13,7 @@ MainWindow::MainWindow(QWidget* parent) :
     m_peerPortLabel(new QLabel("port:", this)),
     m_fileSelectionLayout(new QHBoxLayout()),
     m_fileSelectionLabel(new ClickableLabel("Select file", this)),
-    m_sendFileButton(new QPushButton(">", this)),
+    m_sendFileButton(new QPushButton(this)),
     m_progressBar(new QProgressBar(this)),
     m_settingsWidget(new SettingsWidget(this))
 {
@@ -49,6 +47,9 @@ MainWindow::MainWindow(QWidget* parent) :
     m_settingsWidget->setCurrentPort(initialPort);
     m_myPortLabel->setText(QString("My port: %1").arg(initialPort));
     m_settingsWidget->hide();
+
+    // Initialize progress bar to 0%
+    m_progressBar->setValue(0);
 }
 
 void MainWindow::setupUi()
@@ -63,36 +64,76 @@ void MainWindow::setupUi()
     mainLayout->addWidget(m_rightPanel);
 
     // My Info section
-    m_settingsButton->setIcon(QIcon::fromTheme("configure"));
-    m_settingsButton->setFixedSize(24, 24);
+    QString settingsIconPath = QDir::currentPath() + "/icons/gear.png";
+    m_settingsButton->setIcon(QIcon(settingsIconPath));
+    m_settingsButton->setIconSize(QSize(30, 30));
+    m_settingsButton->setFixedSize(35, 35);
+    m_settingsButton->setStyleSheet("QPushButton {"
+                                    "   background-color: transparent;"
+                                    "   border: 1px solid black;"
+                                    "   border-radius: 3px;"
+                                    "}"
+                                    "QPushButton:hover {"
+                                    "   border: 1px solid gray;"
+                                    "}");
+
     m_myInfoLayout->addWidget(m_myPortLabel);
     m_myInfoLayout->addWidget(m_settingsButton);
+    m_myInfoLayout->setAlignment(Qt::AlignTop);
     m_rightPanelLayout->addLayout(m_myInfoLayout);
 
+    // Add spacer
+    m_rightPanelLayout->addItem(
+        new QSpacerItem(20, 40, QSizePolicy::Minimum, QSizePolicy::Expanding));
+
     // Peer Info section
+    m_selectedPeerLabel->setAlignment(Qt::AlignLeft); // Left align the text
+    QFont peerFont = m_selectedPeerLabel->font();
+    peerFont.setPointSize(16);
+    m_selectedPeerLabel->setFont(peerFont);
     m_rightPanelLayout->addWidget(m_selectedPeerLabel);
+
     m_peerDetailsLayout->addWidget(m_peerIpLabel);
     m_peerDetailsLayout->addWidget(m_peerPortLabel);
     m_peerInfoLayout->addLayout(m_peerDetailsLayout);
     m_rightPanelLayout->addLayout(m_peerInfoLayout);
 
+    // Add some space after peer IP and port
+    m_rightPanelLayout->addItem(
+        new QSpacerItem(20, 10, QSizePolicy::Minimum, QSizePolicy::Fixed));
+
     // File Selection section
     m_fileSelectionLabel->setFrameStyle(QFrame::Panel | QFrame::Sunken);
-    m_fileSelectionLabel->setMinimumSize(200, 60);
+    m_fileSelectionLabel->setMinimumSize(200, 80);
     m_fileSelectionLabel->setAlignment(Qt::AlignCenter);
+
+    QString sendIconPath = QDir::currentPath() + "/icons/send.png";
+    m_sendFileButton->setIcon(QIcon(sendIconPath));
+    m_sendFileButton->setIconSize(QSize(40, 40));
+    m_sendFileButton->setFixedSize(50, 50);
+    m_sendFileButton->setStyleSheet("QPushButton {"
+                                    "   background-color: transparent;"
+                                    "   border: 1px solid black;"
+                                    "   border-radius: 5px;"
+                                    "}"
+                                    "QPushButton:hover {"
+                                    "   border: 1px solid gray;"
+                                    "}");
+
     m_fileSelectionLayout->addWidget(m_fileSelectionLabel);
     m_fileSelectionLayout->addWidget(m_sendFileButton);
     m_rightPanelLayout->addLayout(m_fileSelectionLayout);
 
     // Progress Bar
     m_rightPanelLayout->addWidget(m_progressBar);
+    m_progressBar->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
 
     // Settings Widget (hidden by default)
     m_rightPanelLayout->addWidget(m_settingsWidget);
 
     setCentralWidget(centralWidget);
     setWindowTitle(tr("QuickShare"));
-    resize(600, 400);
+    resize(500, 350);
 }
 
 void MainWindow::onPeerSelected(const QString& peerKey)
@@ -137,13 +178,23 @@ void MainWindow::updateFileInfo()
     if (!m_selectedFilePath.isEmpty())
     {
         QFileInfo fileInfo(m_selectedFilePath);
+        QString   dirPath = fileInfo.dir().path();
         m_fileSelectionLabel->setText(
             QString("Name: %1\nPath: %2\nSize: %3 bytes")
                 .arg(fileInfo.fileName())
-                .arg(fileInfo.filePath())
+                .arg(dirPath)
                 .arg(fileInfo.size()));
+
+        // Set font size to 12 and align text to the left for selected file
+        QFont fileFont = m_fileSelectionLabel->font();
+        fileFont.setPointSize(12);
+        m_fileSelectionLabel->setFont(fileFont);
+        m_fileSelectionLabel->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
     } else {
         m_fileSelectionLabel->setText("Select file");
+        m_fileSelectionLabel->setAlignment(Qt::AlignCenter);
+        m_fileSelectionLabel->setFont(
+            QApplication::font()); // Reset to default font
     }
 }
 
