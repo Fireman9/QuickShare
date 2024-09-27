@@ -75,6 +75,7 @@ void MainWindow::setupUi()
                                     "QPushButton:hover {"
                                     "   border: 1px solid gray;"
                                     "}");
+    m_settingsButton->installEventFilter(this);
 
     m_myInfoLayout->addWidget(m_myPortLabel);
     m_myInfoLayout->addWidget(m_settingsButton);
@@ -118,6 +119,7 @@ void MainWindow::setupUi()
                                     "QPushButton:hover {"
                                     "   border: 1px solid gray;"
                                     "}");
+    m_sendFileButton->installEventFilter(this);
 
     m_fileSelectionLayout->addWidget(m_fileSelectionLabel);
     m_fileSelectionLayout->addWidget(m_sendFileButton);
@@ -227,4 +229,21 @@ QString MainWindow::formatFileSize(qint64 bytes)
     }
 
     return QString("%1 %2").arg(size, 0, 'f', 2).arg(units[unitIndex]);
+}
+
+bool MainWindow::eventFilter(QObject* watched, QEvent* event)
+{
+    QPushButton* button = qobject_cast<QPushButton*>(watched);
+    if (button && (button == m_settingsButton || button == m_sendFileButton))
+    {
+        if (event->type() == QEvent::Enter)
+        {
+            // Change cursor to pointing hand
+            button->setCursor(Qt::PointingHandCursor);
+        } else if (event->type() == QEvent::Leave) {
+            // Reset cursor
+            button->unsetCursor();
+        }
+    }
+    return QMainWindow::eventFilter(watched, event);
 }

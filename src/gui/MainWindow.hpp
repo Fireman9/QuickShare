@@ -2,6 +2,7 @@
 #define MAINWINDOW_HPP
 
 #include <QApplication>
+#include <QCursor>
 #include <QDir>
 #include <QFileDialog>
 #include <QFont>
@@ -69,6 +70,9 @@ class MainWindow : public QMainWindow
     SettingsWidget* m_settingsWidget;
 
     QString m_selectedFilePath;
+
+  protected:
+    bool eventFilter(QObject* watched, QEvent* event) override;
 };
 
 #endif // MAINWINDOW_HPP
