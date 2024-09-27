@@ -205,8 +205,11 @@ void MainWindow::onSendFileClicked()
         return;
     }
 
-    QString peerKey = m_peerIpLabel->text() + ":" + m_peerPortLabel->text();
-    if (peerKey == "IP::port:")
+    QString ip = m_peerIpLabel->text().remove("IP: ");
+    QString port = m_peerPortLabel->text().remove("port: ");
+    QString peerKey = ip + ":" + port;
+
+    if (peerKey == ":")
     {
         QMessageBox::warning(this, "Error", "Please select a peer first.");
         return;
