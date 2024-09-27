@@ -2,13 +2,15 @@
 #define MAINWINDOW_HPP
 
 #include <QHBoxLayout>
+#include <QLabel>
 #include <QMainWindow>
-#include <QMessageBox>
+#include <QProgressBar>
 #include <QPushButton>
+#include <QSpacerItem>
 #include <QVBoxLayout>
 
+#include "ClickableLabel.hpp"
 #include "NetworkManager.hpp"
-#include "PeerInfoWidget.hpp"
 #include "PeerListWidget.hpp"
 #include "SettingsWidget.hpp"
 
@@ -24,16 +26,41 @@ class MainWindow : public QMainWindow
     void onPeerSelected(const QString& peerKey);
     void onSettingsClicked();
     void onApplySettings(quint16 port);
+    void onSelectFileClicked();
+    void onSendFileClicked();
 
   private:
     void setupUi();
+    void updateFileInfo();
 
     PeerListWidget*                 m_peerListWidget;
-    PeerInfoWidget*                 m_peerInfoWidget;
     std::shared_ptr<NetworkManager> m_networkManager;
 
-    QPushButton*    m_settingsButton;
+    QWidget*     m_rightPanel;
+    QVBoxLayout* m_rightPanelLayout;
+
+    // My Info section
+    QHBoxLayout* m_myInfoLayout;
+    QLabel*      m_myPortLabel;
+    QPushButton* m_settingsButton;
+
+    // Peer Info section
+    QVBoxLayout* m_peerInfoLayout;
+    QLabel*      m_selectedPeerLabel;
+    QHBoxLayout* m_peerDetailsLayout;
+    QLabel*      m_peerIpLabel;
+    QLabel*      m_peerPortLabel;
+
+    // File Selection section
+    QHBoxLayout*    m_fileSelectionLayout;
+    ClickableLabel* m_fileSelectionLabel;
+    QPushButton*    m_sendFileButton;
+
+    QProgressBar* m_progressBar;
+
     SettingsWidget* m_settingsWidget;
+
+    QString m_selectedFilePath;
 };
 
 #endif // MAINWINDOW_HPP
