@@ -11,11 +11,10 @@ PeerListWidget::PeerListWidget(QWidget* parent) :
             &PeerListWidget::onAddPeerClicked);
     connect(m_peerList, &QListWidget::itemClicked, this,
             &PeerListWidget::onPeerItemClicked);
+    connect(m_peerList, &QListWidget::itemDoubleClicked, this,
+            &PeerListWidget::onPeerItemDoubleClicked);
 
-    // Apply Roboto font to the QListWidget
     m_peerList->setFont(QApplication::font());
-
-    // Set initial minimum width
     updateWidth();
 }
 
@@ -36,6 +35,10 @@ void PeerListWidget::onAddPeerClicked()
     {
         addPeer(peerKey);
         updateWidth();
+    } else if (ok) {
+        QMessageBox::warning(
+            this, "Invalid Input",
+            "Please enter a valid peer address in the format IP:Port.");
     }
 }
 
@@ -47,11 +50,34 @@ void PeerListWidget::onPeerItemClicked(QListWidgetItem* item)
     }
 }
 
+void PeerListWidget::onPeerItemDoubleClicked(QListWidgetItem* item)
+{
+    if (item)
+    {
+        bool    ok;
+        QString oldPeerKey = item->text();
+        QString newPeerKey = QInputDialog::getText(
+            this, tr("Edit Peer"), tr("Enter new peer address [IP:Port]:"),
+            QLineEdit::Normal, oldPeerKey, &ok);
+        if (ok && !newPeerKey.isEmpty() && newPeerKey != oldPeerKey)
+        {
+            item->setText(newPeerKey);
+            updateWidth();
+            emit peerUpdated(oldPeerKey, newPeerKey);
+        } else if (ok && newPeerKey != oldPeerKey) {
+            QMessageBox::warning(
+                this, "Invalid Input",
+                "Please enter a valid peer address in the format IP:Port.");
+        }
+    }
+}
+
 void PeerListWidget::addPeer(const QString& peerKey)
 {
     if (!m_peerList->findItems(peerKey, Qt::MatchExactly).isEmpty())
     {
-        // TODO: Peer already exists, show a warning
+        QMessageBox::warning(this, "Duplicate Peer",
+                             "This peer already exists in the list.");
         return;
     }
 

@@ -5,6 +5,7 @@
 #include <QFont>
 #include <QInputDialog>
 #include <QListWidget>
+#include <QMessageBox>
 #include <QPushButton>
 #include <QStringList>
 #include <QVBoxLayout>
@@ -20,10 +21,13 @@ class PeerListWidget : public QWidget
   signals:
     void peerSelected(const QString& peerKey);
     void peerAdded(const QString& address, quint16 port);
+    // TODO: process peerUpdated in network manager
+    void peerUpdated(const QString& oldPeerKey, const QString& newPeerKey);
 
   private slots:
     void onAddPeerClicked();
     void onPeerItemClicked(QListWidgetItem* item);
+    void onPeerItemDoubleClicked(QListWidgetItem* item);
 
   private:
     QListWidget* m_peerList;
