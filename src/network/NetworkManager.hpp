@@ -85,7 +85,7 @@ class NetworkManager : public QObject,
     NetworkSettings               network_settings_;
     uint16_t                      current_port_;
     QElapsedTimer                 m_progressUpdateTimer;
-    int                           m_progressUpdateInterval = 100;
+    int                           m_progressUpdateInterval = 200;
 };
 
 #endif // NETWORK_MANAGER_HPP
