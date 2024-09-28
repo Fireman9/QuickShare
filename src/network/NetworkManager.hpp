@@ -1,8 +1,8 @@
 #ifndef NETWORK_MANAGER_HPP
 #define NETWORK_MANAGER_HPP
 
+#include <QElapsedTimer>
 #include <QObject>
-#include <QTimer>
 #include <boost/asio.hpp>
 #include <memory>
 #include <string>
@@ -84,6 +84,8 @@ class NetworkManager : public QObject,
     std::shared_ptr<FileTransfer> file_transfer_;
     NetworkSettings               network_settings_;
     uint16_t                      current_port_;
+    QElapsedTimer                 m_progressUpdateTimer;
+    int                           m_progressUpdateInterval = 100;
 };
 
 #endif // NETWORK_MANAGER_HPP
