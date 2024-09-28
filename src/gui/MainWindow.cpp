@@ -144,6 +144,9 @@ void MainWindow::onPeerSelected(const QString& peerKey)
     {
         m_peerIpLabel->setText(QString("IP: %1").arg(parts[0]));
         m_peerPortLabel->setText(QString("port: %1").arg(parts[1]));
+    } else {
+        m_peerIpLabel->setText("IP:");
+        m_peerPortLabel->setText("port:");
     }
 }
 
@@ -169,9 +172,16 @@ void MainWindow::onApplySettings(quint16 port)
 
 void MainWindow::onSelectFileClicked()
 {
-    m_selectedFilePath = QFileDialog::getOpenFileName(
+    QString newFilePath = QFileDialog::getOpenFileName(
         this, "Select File to Transfer", QDir::homePath(), "All Files (*)");
-    updateFileInfo();
+
+    m_progressBar->setValue(0);
+
+    if (!newFilePath.isEmpty() && newFilePath != m_selectedFilePath)
+    {
+        m_selectedFilePath = newFilePath;
+        updateFileInfo();
+    }
 }
 
 void MainWindow::updateFileInfo()
@@ -207,14 +217,14 @@ void MainWindow::onSendFileClicked()
 
     QString ip = m_peerIpLabel->text().remove("IP: ");
     QString port = m_peerPortLabel->text().remove("port: ");
-    QString peerKey = ip + ":" + port;
 
-    if (peerKey == ":")
+    if (ip.isEmpty() || port.isEmpty() || ip == "IP:" || port == "port:")
     {
         QMessageBox::warning(this, "Error", "Please select a peer first.");
         return;
     }
 
+    QString peerKey = ip + ":" + port;
     m_networkManager->startSendingFile(m_selectedFilePath, peerKey);
     m_progressBar->setValue(0);
 }

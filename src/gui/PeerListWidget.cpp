@@ -16,7 +16,7 @@ PeerListWidget::PeerListWidget(QWidget* parent) :
     m_peerList->setFont(QApplication::font());
 
     // Set initial minimum width
-    updateMinimumWidth();
+    updateWidth();
 }
 
 void PeerListWidget::setupUi()
@@ -35,7 +35,7 @@ void PeerListWidget::onAddPeerClicked()
     if (ok && !peerKey.isEmpty())
     {
         addPeer(peerKey);
-        updateMinimumWidth();
+        updateWidth();
     }
 }
 
@@ -65,10 +65,10 @@ void PeerListWidget::addPeer(const QString& peerKey)
         emit    peerAdded(address, port);
     }
 
-    updateMinimumWidth();
+    updateWidth();
 }
 
-void PeerListWidget::updateMinimumWidth()
+void PeerListWidget::updateWidth()
 {
     QFontMetrics fm(font());
     int          maxWidth = fm.horizontalAdvance(m_addPeerButton->text());
@@ -79,8 +79,9 @@ void PeerListWidget::updateMinimumWidth()
         maxWidth = qMax(maxWidth, itemWidth);
     }
 
-    // Add some padding
+    // padding
     maxWidth += 40;
 
     setMinimumWidth(maxWidth);
+    setMaximumWidth(maxWidth);
 }

@@ -32,7 +32,7 @@ class PeerListWidget : public QWidget
 
     void setupUi();
     void addPeer(const QString& peerKey);
-    void updateMinimumWidth();
+    void updateWidth();
 };
 
 #endif // PEER_LIST_WIDGET_HPP
