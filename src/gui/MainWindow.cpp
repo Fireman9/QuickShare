@@ -38,9 +38,7 @@ MainWindow::MainWindow(QWidget* parent) :
 
     connect(m_networkManager.get(),
             &NetworkManager::fileTransferProgressUpdated,
-            [this](const QString&, double progress) {
-                m_progressBar->setValue(static_cast<int>(progress));
-            });
+            [this](int progress) { m_progressBar->setValue(progress); });
 
     quint16 initialPort = 8080;
     m_networkManager->start(initialPort);

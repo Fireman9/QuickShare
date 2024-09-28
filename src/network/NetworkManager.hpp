@@ -48,7 +48,7 @@ class NetworkManager : public QObject,
     void resumeFileTransfer(const QString& file_id);
 
   signals:
-    void fileTransferProgressUpdated(const QString& fileId, double progress);
+    void fileTransferProgressUpdated(int progress);
     void portChanged(uint16_t newPort);
 
   private:
@@ -68,13 +68,13 @@ class NetworkManager : public QObject,
                             const std::string&  peer_key);
     void handleChunkMetrics(const ChunkMetrics& metrics,
                             const std::string&  peer_key);
+    void handleTransferComplete(const std::string& file_id, bool success);
 
     std::string getPeerKey(const tcp::endpoint& endpoint) const;
     std::unordered_map<std::string, std::shared_ptr<PeerConnection>>::iterator
     findPeerByFileId(const std::string& file_id);
 
-    void updateFileTransferProgress();
-    void startProgressUpdateTimer();
+    void updateFileTransferProgress(const std::string& file_id);
 
     io_context                        io_context_;
     std::unique_ptr<tcp::acceptor>    acceptor_;
@@ -83,7 +83,6 @@ class NetworkManager : public QObject,
     std::unordered_map<std::string, std::shared_ptr<PeerConnection>> peers_;
     std::shared_ptr<FileTransfer> file_transfer_;
     NetworkSettings               network_settings_;
-    QTimer*                       progress_update_timer_;
     uint16_t                      current_port_;
 };
 

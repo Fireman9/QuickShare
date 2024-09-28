@@ -17,6 +17,7 @@ NetworkManager::NetworkManager() :
         {
             it->second->sendMessage(chunk);
         }
+        updateFileTransferProgress(chunk.getFileId());
     });
 
     file_transfer_->setFileMetadataCallback(
@@ -33,10 +34,8 @@ NetworkManager::NetworkManager() :
             LOG_INFO(QString("File transfer %1 for file ID: %2")
                          .arg(success ? "completed" : "failed")
                          .arg(file_id.c_str()));
-            // TODO: add more logic here
+            handleTransferComplete(file_id, success);
         });
-
-    startProgressUpdateTimer();
 }
 
 void NetworkManager::start(uint16_t port)
@@ -54,8 +53,6 @@ void NetworkManager::start(uint16_t port)
     {
         LOG_ERROR(QString("Error starting NetworkManager: %1").arg(e.what()));
     }
-
-    startProgressUpdateTimer();
 }
 
 void NetworkManager::stop()
@@ -172,15 +169,10 @@ void NetworkManager::resumeFileTransfer(const QString& file_id)
     file_transfer_->resumeTransfer(file_id.toStdString());
 }
 
-void NetworkManager::updateFileTransferProgress()
+void NetworkManager::updateFileTransferProgress(const std::string& file_id)
 {
-    auto active_transfers = file_transfer_->getActiveTransfers();
-    for (const auto& transfer : active_transfers)
-    {
-        double progress = file_transfer_->getTransferProgress(transfer);
-        emit   fileTransferProgressUpdated(QString::fromStdString(transfer),
-                                           progress);
-    }
+    double progress = file_transfer_->getTransferProgress(file_id);
+    emit   fileTransferProgressUpdated(static_cast<int>(progress));
 }
 
 void NetworkManager::setMessageHandler(
@@ -295,9 +287,13 @@ void NetworkManager::handleIncomingMessage(const Message&     message,
                                peer_key);
             break;
         case MessageType::CHUNK:
+        {
             handleChunkMessage(static_cast<const ChunkMessage&>(message),
                                peer_key);
+            updateFileTransferProgress(
+                static_cast<const ChunkMessage&>(message).getFileId());
             break;
+        }
         case MessageType::CHUNK_METRICS:
             handleChunkMetrics(static_cast<const ChunkMetrics&>(message),
                                peer_key);
@@ -362,12 +358,11 @@ void NetworkManager::handleChunkMetrics(const ChunkMetrics& metrics,
     }
 }
 
-void NetworkManager::startProgressUpdateTimer()
+void NetworkManager::handleTransferComplete(const std::string& file_id,
+                                            bool               success)
 {
-    progress_update_timer_ = new QTimer(this);
-    connect(progress_update_timer_, &QTimer::timeout, this,
-            &NetworkManager::updateFileTransferProgress);
-    progress_update_timer_->start(500);
+    int  finalProgress = success ? 100 : 0;
+    emit fileTransferProgressUpdated(finalProgress);
 }
 
 std::string NetworkManager::getPeerKey(const tcp::endpoint& endpoint) const

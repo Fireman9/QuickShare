@@ -245,17 +245,17 @@ void FileTransfer::checkTransferCompletion(const std::string& file_id)
         const TransferInfo& info = it->second;
         if (info.current_offset >= info.file_size)
         {
+            bool success = true;
+            if (!info.is_sending)
+            {
+                std::string calculated_hash =
+                    fs_manager_->calculateFileHash(info.file_path);
+                // TODO: compare calculated_hash with the expected hash from
+                // FileMetadata
+                success = true; // Result of the hash comparison
+            }
             if (transfer_complete_callback_)
             {
-                bool success = true;
-                if (!info.is_sending)
-                {
-                    std::string calculated_hash =
-                        fs_manager_->calculateFileHash(info.file_path);
-                    // TODO: compare calculated_hash with the expected hash from
-                    // FileMetadata
-                    success = true;
-                }
                 transfer_complete_callback_(file_id, success);
             }
             active_transfers_.erase(it);
