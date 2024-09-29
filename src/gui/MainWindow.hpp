@@ -1,24 +1,16 @@
 #ifndef MAINWINDOW_HPP
 #define MAINWINDOW_HPP
 
-#include <QApplication>
-#include <QCursor>
-#include <QDir>
 #include <QFileDialog>
-#include <QFont>
 #include <QFontDatabase>
-#include <QHBoxLayout>
-#include <QIcon>
-#include <QLabel>
 #include <QMainWindow>
-#include <QMessageBox>
 #include <QProgressBar>
-#include <QPushButton>
 #include <QSpacerItem>
-#include <QVBoxLayout>
 
-#include "ClickableLabel.hpp"
+#include "FileSelectionSection.hpp"
+#include "InfoSection.hpp"
 #include "NetworkManager.hpp"
+#include "PeerInfoSection.hpp"
 #include "PeerListWidget.hpp"
 #include "SettingsWidget.hpp"
 
@@ -27,8 +19,7 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
   public:
-    MainWindow(QWidget* parent = nullptr);
-    ~MainWindow() = default;
+    explicit MainWindow(QWidget* parent = nullptr);
 
   private slots:
     void onPeerSelected(const QString& peerKey);
@@ -38,41 +29,24 @@ class MainWindow : public QMainWindow
     void onSendFileClicked();
 
   private:
-    void    setupUi();
-    void    updateFileInfo();
-    QString formatFileSize(qint64 bytes);
+    void setupUi();
+    void setupConnections();
 
-    PeerListWidget*                 m_peerListWidget;
-    std::shared_ptr<NetworkManager> m_networkManager;
+    void updateFileInfo();
 
-    QWidget*     m_rightPanel;
-    QVBoxLayout* m_rightPanelLayout;
+    PeerListWidget* m_peerListWidget;
+    QWidget*        m_rightPanel;
+    QVBoxLayout*    m_rightPanelLayout;
 
-    // My Info section
-    QHBoxLayout* m_myInfoLayout;
-    QLabel*      m_myPortLabel;
-    QPushButton* m_settingsButton;
+    InfoSection*          m_infoSection;
+    PeerInfoSection*      m_peerInfoSection;
+    FileSelectionSection* m_fileSelectionSection;
 
-    // Peer Info section
-    QVBoxLayout* m_peerInfoLayout;
-    QLabel*      m_selectedPeerLabel;
-    QHBoxLayout* m_peerDetailsLayout;
-    QLabel*      m_peerIpLabel;
-    QLabel*      m_peerPortLabel;
-
-    // File Selection section
-    QHBoxLayout*    m_fileSelectionLayout;
-    ClickableLabel* m_fileSelectionLabel;
-    QPushButton*    m_sendFileButton;
-
-    QProgressBar* m_progressBar;
-
+    QProgressBar*   m_progressBar;
     SettingsWidget* m_settingsWidget;
 
-    QString m_selectedFilePath;
-
-  protected:
-    bool eventFilter(QObject* watched, QEvent* event) override;
+    std::shared_ptr<NetworkManager> m_networkManager;
+    QString                         m_selectedFilePath;
 };
 
 #endif // MAINWINDOW_HPP
