@@ -141,11 +141,12 @@ void FileTransfer::cancelTransfer(const std::string& file_id)
 std::vector<std::string> FileTransfer::getActiveTransfers() const
 {
     std::vector<std::string> active_transfers;
-    for (const auto& transfer : active_transfers_)
-    {
-        // TODO: use transform instead loop?
-        active_transfers.push_back(transfer.first);
-    }
+    active_transfers.reserve(active_transfers_.size());
+
+    std::transform(active_transfers_.begin(), active_transfers_.end(),
+                   std::back_inserter(active_transfers),
+                   [](const auto& pair) { return pair.first; });
+
     return active_transfers;
 }
 
