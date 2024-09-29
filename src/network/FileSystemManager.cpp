@@ -33,7 +33,6 @@ FileSystemManager::calculateFileHash(const fs::path& file_path) const
         return "";
     }
 
-    // TODO: optimize hash calculation
     boost::crc_32_type result;
     char               buffer[4096];
     while (file)

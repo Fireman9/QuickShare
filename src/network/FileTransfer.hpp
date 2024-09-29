@@ -55,6 +55,7 @@ class FileTransfer
         size_t      file_size;
         bool        is_sending;
         bool        is_paused;
+        std::string expected_hash;
 
         std::unique_ptr<ChunkSizeOptimizer> chunk_size_optimizer;
     };

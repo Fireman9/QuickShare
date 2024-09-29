@@ -15,6 +15,7 @@ void FileTransfer::startSending(const std::string& file_path,
 
     std::string file_id = generateFileId(file_path, peer_id);
     size_t      file_size = fs_manager_->getFileSize(file_path);
+    std::string file_hash = fs_manager_->calculateFileHash(file_path);
 
     TransferInfo info{
         file_path,
@@ -23,11 +24,12 @@ void FileTransfer::startSending(const std::string& file_path,
         file_size,
         true,
         false,
+        file_hash,
         std::make_unique<ChunkSizeOptimizer>(generatePossibleChunkSizes())};
     active_transfers_[file_id] = std::move(info);
 
     FileMetadata metadata(file_id, fs_manager_->getFileName(file_path),
-                          file_size, fs_manager_->calculateFileHash(file_path));
+                          file_size, file_hash);
     if (file_metadata_callback_)
     {
         file_metadata_callback_(metadata);
@@ -49,6 +51,7 @@ void FileTransfer::startReceiving(const FileMetadata& metadata)
         metadata.getFileSize(),
         false,
         false,
+        metadata.getFileHash(),
         std::make_unique<ChunkSizeOptimizer>(generatePossibleChunkSizes())};
     active_transfers_[metadata.getFileId()] = std::move(info);
 }
@@ -251,14 +254,33 @@ void FileTransfer::checkTransferCompletion(const std::string& file_id)
             {
                 std::string calculated_hash =
                     fs_manager_->calculateFileHash(info.file_path);
-                // TODO: compare calculated_hash with the expected hash from
-                // FileMetadata
-                success = true; // Result of the hash comparison
+                success = (calculated_hash == info.expected_hash);
+
+                if (!success)
+                {
+                    LOG_ERROR(QString("Hash mismatch for file %1. Expected: "
+                                      "%2, Calculated: %3")
+                                  .arg(info.file_path.c_str())
+                                  .arg(info.expected_hash.c_str())
+                                  .arg(calculated_hash.c_str()));
+                } else {
+                    LOG_INFO(QString("Hash verification successful for file %1")
+                                 .arg(info.file_path.c_str()));
+                }
             }
+
             if (transfer_complete_callback_)
             {
                 transfer_complete_callback_(file_id, success);
             }
+
+            if (!success && !info.is_sending)
+            {
+                fs_manager_->deleteFile(info.file_path);
+                LOG_INFO(QString("Deleted file %1 due to hash mismatch")
+                             .arg(info.file_path.c_str()));
+            }
+
             active_transfers_.erase(it);
         }
     }
