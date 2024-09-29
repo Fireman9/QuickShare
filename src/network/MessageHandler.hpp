@@ -22,10 +22,13 @@ class MessageHandler
     template <typename T>
     void handleTypedMessage(const T& message)
     {
-        // TODO: assert rework
-        static_assert(std::is_base_of<Message, T>::value,
-                      "T must be derived from Message");
-        handleMessage(message);
+        if constexpr (std::is_base_of_v<Message, T>)
+        {
+            handleMessage(message);
+        } else {
+            static_assert(std::is_base_of_v<Message, T>,
+                          "T must be derived from Message");
+        }
     }
 
   private:
