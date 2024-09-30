@@ -36,6 +36,8 @@ class FileTransfer
     double getTransferProgress(const std::string& file_id) const;
     size_t getOptimalChunkSize(const std::string& file_id) const;
 
+    bool isFileSending(const std::string& file_id) const;
+
     using ChunkReadyCallback = std::function<void(const ChunkMessage&)>;
     void setChunkReadyCallback(ChunkReadyCallback callback);
 

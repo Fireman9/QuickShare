@@ -158,10 +158,7 @@ double FileTransfer::getTransferProgress(const std::string& file_id) const
     auto it = active_transfers_.find(file_id);
     if (it == active_transfers_.end())
     {
-        LOG_WARNING(
-            QString("Attempted to get progress for non-existent transfer: %1")
-                .arg(file_id.c_str()));
-        return 0.0;
+        return 100.0;
     }
 
     const TransferInfo& info = it->second;
@@ -185,6 +182,16 @@ size_t FileTransfer::getOptimalChunkSize(const std::string& file_id) const
         return it->second.chunk_size_optimizer->getOptimalChunkSize();
     }
     return MAX_CHUNK_SIZE;
+}
+
+bool FileTransfer::isFileSending(const std::string& file_id) const
+{
+    auto it = active_transfers_.find(file_id);
+    if (it != active_transfers_.end())
+    {
+        return it->second.is_sending;
+    }
+    return false;
 }
 
 void FileTransfer::setChunkReadyCallback(ChunkReadyCallback callback)
