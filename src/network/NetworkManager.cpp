@@ -37,7 +37,8 @@ NetworkManager::NetworkManager() :
             handleTransferComplete(file_id, success);
         });
 
-    m_progressUpdateTimer.start();
+    m_sendProgressUpdateTimer.start();
+    m_receiveProgressUpdateTimer.start();
 }
 
 void NetworkManager::start(uint16_t port)
@@ -147,10 +148,11 @@ void NetworkManager::sendMessage(const Message&     message,
 void NetworkManager::startSendingFile(const QString& filePath,
                                       const QString& peerKey)
 {
-    LOG_INFO(QString("Starting to send file: %1 to peer: %2")
-                 .arg(filePath)
-                 .arg(peerKey));
+    QFileInfo fileInfo(filePath);
+    emit      fileSendStarted(fileInfo.fileName(), fileInfo.filePath(),
+                              fileInfo.size());
     file_transfer_->startSending(filePath.toStdString(), peerKey.toStdString());
+    m_sendProgressUpdateTimer.start();
 }
 
 void NetworkManager::cancelFileTransfer(const QString& file_id)
@@ -173,11 +175,11 @@ void NetworkManager::resumeFileTransfer(const QString& file_id)
 
 void NetworkManager::updateFileTransferProgress(const std::string& file_id)
 {
-    if (m_progressUpdateTimer.elapsed() >= m_progressUpdateInterval)
+    if (m_sendProgressUpdateTimer.elapsed() >= m_progressUpdateInterval)
     {
         double progress = file_transfer_->getTransferProgress(file_id);
-        emit   fileTransferProgressUpdated(static_cast<int>(progress));
-        m_progressUpdateTimer.restart();
+        emit   fileSendProgressUpdated(static_cast<int>(progress));
+        m_sendProgressUpdateTimer.restart();
     }
 }
 
@@ -316,6 +318,13 @@ void NetworkManager::handleFileMetadata(const FileMetadata& metadata,
                  .arg(metadata.getFileName().c_str())
                  .arg(peer_key.c_str()));
     file_transfer_->startReceiving(metadata);
+
+    QString fileName = QString::fromStdString(metadata.getFileName());
+    QString filePath = QDir::currentPath() + "/" + fileName;
+    qint64  fileSize = metadata.getFileSize();
+
+    emit fileReceiveStarted(fileName, filePath, fileSize);
+    m_receiveProgressUpdateTimer.start();
 }
 
 void NetworkManager::handleChunkMessage(const ChunkMessage& chunk_msg,
@@ -325,6 +334,14 @@ void NetworkManager::handleChunkMessage(const ChunkMessage& chunk_msg,
                  .arg(chunk_msg.getOffset())
                  .arg(chunk_msg.getFileId().c_str()));
     file_transfer_->handleIncomingChunk(chunk_msg);
+
+    if (m_receiveProgressUpdateTimer.elapsed() >= m_progressUpdateInterval)
+    {
+        double progress =
+            file_transfer_->getTransferProgress(chunk_msg.getFileId());
+        emit fileReceiveProgressUpdated(static_cast<int>(progress));
+        m_receiveProgressUpdateTimer.restart();
+    }
 
     ChunkMetrics metrics(chunk_msg.getFileId(), chunk_msg.getOffset(),
                          chunk_msg.getData().size(),
@@ -368,8 +385,15 @@ void NetworkManager::handleChunkMetrics(const ChunkMetrics& metrics,
 void NetworkManager::handleTransferComplete(const std::string& file_id,
                                             bool               success)
 {
-    int  finalProgress = success ? 100 : 0;
-    emit fileTransferProgressUpdated(finalProgress);
+    int finalProgress = success ? 100 : 0;
+
+    bool isSending = file_transfer_->isFileSending(file_id);
+    if (isSending)
+    {
+        emit fileSendProgressUpdated(finalProgress);
+    } else {
+        emit fileReceiveProgressUpdated(finalProgress);
+    }
 }
 
 std::string NetworkManager::getPeerKey(const tcp::endpoint& endpoint) const

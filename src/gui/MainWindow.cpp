@@ -74,9 +74,14 @@ void MainWindow::setupConnections()
     connect(m_fileSelectionSection, &FileSelectionSection::sendClicked, this,
             &MainWindow::onSendFileClicked);
 
-    connect(m_networkManager.get(),
-            &NetworkManager::fileTransferProgressUpdated,
-            [this](int progress) { m_progressBar->setValue(progress); });
+    connect(m_networkManager.get(), &NetworkManager::fileReceiveStarted, this,
+            &MainWindow::onFileReceiveStarted);
+    connect(m_networkManager.get(), &NetworkManager::fileReceiveProgressUpdated,
+            this, &MainWindow::onFileReceiveProgressUpdated);
+    connect(m_networkManager.get(), &NetworkManager::fileSendStarted, this,
+            &MainWindow::onFileSendStarted);
+    connect(m_networkManager.get(), &NetworkManager::fileSendProgressUpdated,
+            this, &MainWindow::onFileSendProgressUpdated);
 }
 
 void MainWindow::onPeerSelected(const QString& peerKey)
@@ -146,6 +151,30 @@ void MainWindow::onSendFileClicked()
     m_progressBar->setValue(0);
 }
 
+void MainWindow::onFileReceiveStarted(const QString& fileName,
+                                      const QString& filePath, qint64 fileSize)
+{
+    m_fileSelectionSection->updateFileInfo(fileName, filePath, fileSize, true);
+    m_progressBar->setValue(0);
+}
+
+void MainWindow::onFileReceiveProgressUpdated(int progress)
+{
+    m_progressBar->setValue(progress);
+}
+
+void MainWindow::onFileSendStarted(const QString& fileName,
+                                   const QString& filePath, qint64 fileSize)
+{
+    m_fileSelectionSection->updateFileInfo(fileName, filePath, fileSize, false);
+    m_progressBar->setValue(0);
+}
+
+void MainWindow::onFileSendProgressUpdated(int progress)
+{
+    m_progressBar->setValue(progress);
+}
+
 void MainWindow::updateFileInfo()
 {
     if (!m_selectedFilePath.isEmpty())
@@ -154,8 +183,8 @@ void MainWindow::updateFileInfo()
         QString   dirPath = fileInfo.dir().path();
         qint64    fileSize = fileInfo.size();
         m_fileSelectionSection->updateFileInfo(fileInfo.fileName(), dirPath,
-                                               fileSize);
+                                               fileSize, false);
     } else {
-        m_fileSelectionSection->updateFileInfo("", "", 0);
+        m_fileSelectionSection->updateFileInfo("", "", 0, false);
     }
 }

@@ -28,6 +28,13 @@ class MainWindow : public QMainWindow
     void onSelectFileClicked();
     void onSendFileClicked();
 
+    void onFileReceiveStarted(const QString& fileName, const QString& filePath,
+                              qint64 fileSize);
+    void onFileReceiveProgressUpdated(int progress);
+    void onFileSendStarted(const QString& fileName, const QString& filePath,
+                           qint64 fileSize);
+    void onFileSendProgressUpdated(int progress);
+
   private:
     void setupUi();
     void setupConnections();

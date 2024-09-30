@@ -48,8 +48,13 @@ class NetworkManager : public QObject,
     void resumeFileTransfer(const QString& file_id);
 
   signals:
-    void fileTransferProgressUpdated(int progress);
+    void fileSendProgressUpdated(int progress);
     void portChanged(uint16_t newPort);
+    void fileReceiveStarted(const QString& fileName, const QString& filePath,
+                            qint64 fileSize);
+    void fileReceiveProgressUpdated(int progress);
+    void fileSendStarted(const QString& fileName, const QString& filePath,
+                         qint64 fileSize);
 
   private:
     NetworkManager();
@@ -84,8 +89,10 @@ class NetworkManager : public QObject,
     std::shared_ptr<FileTransfer> file_transfer_;
     NetworkSettings               network_settings_;
     uint16_t                      current_port_;
-    QElapsedTimer                 m_progressUpdateTimer;
-    int                           m_progressUpdateInterval = 200;
+
+    QElapsedTimer m_receiveProgressUpdateTimer;
+    QElapsedTimer m_sendProgressUpdateTimer;
+    int           m_progressUpdateInterval = 200;
 };
 
 #endif // NETWORK_MANAGER_HPP
