@@ -5,8 +5,7 @@ SettingsWidget::SettingsWidget(QWidget* parent) :
     m_applyButton(new QPushButton("Apply", this))
 {
     setupUi();
-    connect(m_applyButton, &QPushButton::clicked, this,
-            &SettingsWidget::onApplyClicked);
+    setupConnections();
 }
 
 void SettingsWidget::setupUi()
@@ -20,7 +19,25 @@ void SettingsWidget::setupUi()
     setLayout(layout);
 }
 
+void SettingsWidget::setupConnections()
+{
+    connect(m_applyButton, &QPushButton::clicked, this,
+            &SettingsWidget::onApplyClicked);
+    connect(m_portInput, &QLineEdit::returnPressed, this,
+            &SettingsWidget::onPortInputReturnPressed);
+}
+
 void SettingsWidget::onApplyClicked()
+{
+    tryApplySettings();
+}
+
+void SettingsWidget::onPortInputReturnPressed()
+{
+    tryApplySettings();
+}
+
+void SettingsWidget::tryApplySettings()
 {
     bool    ok;
     quint16 port = m_portInput->text().toUShort(&ok);

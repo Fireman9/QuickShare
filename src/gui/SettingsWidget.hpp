@@ -22,12 +22,15 @@ class SettingsWidget : public QWidget
 
   private slots:
     void onApplyClicked();
+    void onPortInputReturnPressed();
 
   private:
     QLineEdit*   m_portInput;
     QPushButton* m_applyButton;
 
     void setupUi();
+    void setupConnections();
+    void tryApplySettings();
 };
 
 #endif // SETTINGS_WIDGET_HPP
