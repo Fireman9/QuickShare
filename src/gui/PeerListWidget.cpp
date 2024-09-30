@@ -33,12 +33,17 @@ void PeerListWidget::onAddPeerClicked()
                                             QLineEdit::Normal, QString(), &ok);
     if (ok && !peerKey.isEmpty())
     {
-        addPeer(peerKey);
-        updateWidth();
-    } else if (ok) {
-        QMessageBox::warning(
-            this, "Invalid Input",
-            "Please enter a valid peer address in the format IP:Port.");
+        QStringList parts = peerKey.split(":");
+        if (parts.size() == 2)
+        {
+            QString address = parts[0];
+            quint16 port = parts[1].toUShort();
+            emit    peerAdded(address, port);
+        } else {
+            QMessageBox::warning(
+                this, "Invalid Input",
+                "Please enter a valid peer address in the format IP:Port.");
+        }
     }
 }
 
@@ -59,12 +64,12 @@ void PeerListWidget::onPeerItemDoubleClicked(QListWidgetItem* item)
         QString newPeerKey = QInputDialog::getText(
             this, tr("Edit Peer"), tr("Enter new peer address [IP:Port]:"),
             QLineEdit::Normal, oldPeerKey, &ok);
-        if (ok && !newPeerKey.isEmpty() && newPeerKey != oldPeerKey)
+        if (ok && !newPeerKey.isEmpty())
         {
             item->setText(newPeerKey);
             updateWidth();
             emit peerUpdated(oldPeerKey, newPeerKey);
-        } else if (ok && newPeerKey != oldPeerKey) {
+        } else {
             QMessageBox::warning(
                 this, "Invalid Input",
                 "Please enter a valid peer address in the format IP:Port.");
@@ -74,23 +79,21 @@ void PeerListWidget::onPeerItemDoubleClicked(QListWidgetItem* item)
 
 void PeerListWidget::addPeer(const QString& peerKey)
 {
-    if (!m_peerList->findItems(peerKey, Qt::MatchExactly).isEmpty())
+    if (m_peerList->findItems(peerKey, Qt::MatchExactly).isEmpty())
     {
-        QMessageBox::warning(this, "Duplicate Peer",
-                             "This peer already exists in the list.");
-        return;
+        m_peerList->addItem(peerKey);
+        updateWidth();
     }
+}
 
-    m_peerList->addItem(peerKey);
-
-    QStringList parts = peerKey.split(":");
-    if (parts.size() == 2)
+void PeerListWidget::removePeer(const QString& peerKey)
+{
+    QList<QListWidgetItem*> items =
+        m_peerList->findItems(peerKey, Qt::MatchExactly);
+    for (QListWidgetItem* item : items)
     {
-        QString address = parts[0];
-        quint16 port = parts[1].toUShort();
-        emit    peerAdded(address, port);
+        delete m_peerList->takeItem(m_peerList->row(item));
     }
-
     updateWidth();
 }
 

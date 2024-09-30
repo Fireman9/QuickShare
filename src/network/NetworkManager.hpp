@@ -48,6 +48,7 @@ class NetworkManager : public QObject,
     void resumeFileTransfer(const QString& file_id);
 
   signals:
+    void peerConnectionResult(const QString& peerKey, bool success);
     void fileSendProgressUpdated(int progress);
     void portChanged(uint16_t newPort);
     void fileReceiveStarted(const QString& fileName, const QString& filePath,

@@ -23,6 +23,7 @@ class MainWindow : public QMainWindow
 
   private slots:
     void onPeerSelected(const QString& peerKey);
+    void onPeerConnectionResult(const QString& peerKey, bool success);
     void onSettingsClicked();
     void onApplySettings(quint16 port);
     void onSelectFileClicked();

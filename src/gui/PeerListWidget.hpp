@@ -18,10 +18,12 @@ class PeerListWidget : public QWidget
   public:
     explicit PeerListWidget(QWidget* parent = nullptr);
 
+    void addPeer(const QString& peerKey);
+    void removePeer(const QString& peerKey);
+
   signals:
     void peerSelected(const QString& peerKey);
     void peerAdded(const QString& address, quint16 port);
-    // TODO: process peerUpdated in network manager
     void peerUpdated(const QString& oldPeerKey, const QString& newPeerKey);
 
   private slots:
@@ -35,7 +37,6 @@ class PeerListWidget : public QWidget
     QVBoxLayout* m_layout;
 
     void setupUi();
-    void addPeer(const QString& peerKey);
     void updateWidth();
 };
 

@@ -63,6 +63,8 @@ void MainWindow::setupConnections()
             [this](const QString& address, quint16 port) {
                 m_networkManager->connectToPeer(address.toStdString(), port);
             });
+    connect(m_networkManager.get(), &NetworkManager::peerConnectionResult, this,
+            &MainWindow::onPeerConnectionResult);
 
     connect(m_infoSection, &InfoSection::settingsClicked, this,
             &MainWindow::onSettingsClicked);
@@ -92,6 +94,19 @@ void MainWindow::onPeerSelected(const QString& peerKey)
         m_peerInfoSection->updatePeerInfo(parts[0], parts[1]);
     } else {
         m_peerInfoSection->updatePeerInfo("", "");
+    }
+}
+
+void MainWindow::onPeerConnectionResult(const QString& peerKey, bool success)
+{
+    if (success)
+    {
+        m_peerListWidget->addPeer(peerKey);
+        QMessageBox::information(this, "Connection Successful",
+                                 "Successfully connected to peer: " + peerKey);
+    } else {
+        QMessageBox::warning(this, "Connection Failed",
+                             "Failed to connect to peer: " + peerKey);
     }
 }
 

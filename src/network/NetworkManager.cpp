@@ -119,8 +119,12 @@ void NetworkManager::connectToPeer(const std::string& address, uint16_t port)
 
     new_connection->socket().async_connect(
         tcp::endpoint(boost::asio::ip::address::from_string(address), port),
-        [this, new_connection](const error_code& error) {
+        [this, new_connection, address, port](const error_code& error) {
             handleConnect(new_connection, error);
+
+            QString peerKey =
+                QString::fromStdString(address + ":" + std::to_string(port));
+            emit peerConnectionResult(peerKey, !error);
         });
 }
 
