@@ -17,7 +17,7 @@ class FileSelectionSection : public QWidget
     explicit FileSelectionSection(QWidget* parent = nullptr);
 
     void updateFileInfo(const QString& fileName, const QString& filePath,
-                        qint64 fileSize);
+                        qint64 fileSize, bool receiving);
 
     QPushButton* getSendButton() const;
 

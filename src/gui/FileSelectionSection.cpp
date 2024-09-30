@@ -34,10 +34,13 @@ void FileSelectionSection::setupConnections()
 
 void FileSelectionSection::updateFileInfo(const QString& fileName,
                                           const QString& filePath,
-                                          qint64         fileSize)
+                                          qint64 fileSize, bool receiving)
 {
     QString formattedSize = formatFileSize(fileSize);
-    m_fileSelectionLabel->setText(QString("Name: %1\nPath: %2\nSize: %3")
+    QString statusPrefix = receiving ? "Receiving:" : "Sending:";
+
+    m_fileSelectionLabel->setText(QString("%1\nName: %2\nPath: %3\nSize: %4")
+                                      .arg(statusPrefix)
                                       .arg(fileName)
                                       .arg(filePath)
                                       .arg(formattedSize));
@@ -46,6 +49,8 @@ void FileSelectionSection::updateFileInfo(const QString& fileName,
     fileFont.setPointSize(12);
     m_fileSelectionLabel->setFont(fileFont);
     m_fileSelectionLabel->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
+
+    m_sendFileButton->setEnabled(!receiving);
 }
 
 QPushButton* FileSelectionSection::getSendButton() const
