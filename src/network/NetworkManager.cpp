@@ -9,7 +9,8 @@ NetworkManager::NetworkManager() :
     QObject(), work_(std::make_shared<io_context::work>(io_context_)),
     file_transfer_(
         std::make_shared<FileTransfer>(std::make_shared<FileSystemManager>())),
-    network_settings_(), current_port_(8080)
+    network_settings_(), current_port_(8080),
+    m_downloadDirectory(QDir::currentPath())
 {
     file_transfer_->setChunkReadyCallback([this](const ChunkMessage& chunk) {
         auto it = findPeerByFileId(chunk.getFileId());
@@ -211,6 +212,20 @@ void NetworkManager::updateNetworkSettings(const NetworkSettings& settings)
     }
 }
 
+void NetworkManager::setDownloadDirectory(const QString& directory)
+{
+    if (m_downloadDirectory != directory)
+    {
+        m_downloadDirectory = directory;
+        emit downloadDirectoryChanged(directory);
+    }
+}
+
+QString NetworkManager::getDownloadDirectory() const
+{
+    return m_downloadDirectory;
+}
+
 uint16_t NetworkManager::getCurrentPort()
 {
     return current_port_;
@@ -321,10 +336,12 @@ void NetworkManager::handleFileMetadata(const FileMetadata& metadata,
     LOG_INFO(QString("Received file metadata for file: %1 from peer: %2")
                  .arg(metadata.getFileName().c_str())
                  .arg(peer_key.c_str()));
-    file_transfer_->startReceiving(metadata);
+
+    QString filePath = m_downloadDirectory + "/" +
+                       QString::fromStdString(metadata.getFileName());
+    file_transfer_->startReceiving(metadata, filePath.toStdString());
 
     QString fileName = QString::fromStdString(metadata.getFileName());
-    QString filePath = QDir::currentPath() + "/" + fileName;
     qint64  fileSize = metadata.getFileSize();
 
     emit fileReceiveStarted(fileName, filePath, fileSize);

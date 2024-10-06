@@ -39,6 +39,8 @@ class NetworkManager : public QObject,
     void setMessageHandler(const MessageHandler::MessageCallback& handler);
     void updateNetworkSettings(const NetworkSettings& settings);
 
+    void     setDownloadDirectory(const QString& directory);
+    QString  getDownloadDirectory() const;
     uint16_t getCurrentPort();
 
   public slots:
@@ -50,6 +52,7 @@ class NetworkManager : public QObject,
   signals:
     void peerConnectionResult(const QString& peerKey, bool success);
     void fileSendProgressUpdated(int progress);
+    void downloadDirectoryChanged(const QString& newDirectory);
     void portChanged(uint16_t newPort);
     void fileReceiveStarted(const QString& fileName, const QString& filePath,
                             qint64 fileSize);
@@ -85,11 +88,14 @@ class NetworkManager : public QObject,
     io_context                        io_context_;
     std::unique_ptr<tcp::acceptor>    acceptor_;
     std::shared_ptr<io_context::work> work_;
-    MessageHandler                    message_handler_;
+
+    MessageHandler message_handler_;
     std::unordered_map<std::string, std::shared_ptr<PeerConnection>> peers_;
     std::shared_ptr<FileTransfer> file_transfer_;
     NetworkSettings               network_settings_;
-    uint16_t                      current_port_;
+
+    uint16_t current_port_;
+    QString  m_downloadDirectory;
 
     QElapsedTimer m_receiveProgressUpdateTimer;
     QElapsedTimer m_sendProgressUpdateTimer;

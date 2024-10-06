@@ -23,7 +23,8 @@ class FileTransfer
     explicit FileTransfer(std::shared_ptr<FileSystemManager> fs_manager);
 
     void startSending(const std::string& file_path, const std::string& peer_id);
-    void startReceiving(const FileMetadata& metadata);
+    void startReceiving(const FileMetadata& metadata,
+                        const std::string&  downloadPath = "");
     void handleIncomingChunk(const ChunkMessage& chunk_msg);
     void handleChunkMetrics(const std::string& file_id, size_t chunk_number,
                             size_t                    chunk_size,

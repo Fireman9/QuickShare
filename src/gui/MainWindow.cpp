@@ -12,6 +12,8 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent)
     m_networkManager->start(initialPort);
     m_infoSection->setCurrentPort(initialPort);
     m_settingsWidget->setCurrentPort(initialPort);
+    m_settingsWidget->setCurrentDirectory(
+        m_networkManager->getDownloadDirectory());
     m_settingsWidget->hide();
 
     m_progressBar->setValue(0);
@@ -115,12 +117,14 @@ void MainWindow::onSettingsClicked()
     m_settingsWidget->setVisible(!m_settingsWidget->isVisible());
 }
 
-void MainWindow::onApplySettings(quint16 port)
+void MainWindow::onApplySettings(quint16 port, const QString& directory)
 {
     if (m_networkManager->changePort(port))
     {
-        QMessageBox::information(this, "Success", "Port changed successfully.");
+        QMessageBox::information(this, "Success",
+                                 "Settings applied successfully.");
         m_infoSection->setCurrentPort(port);
+        m_networkManager->setDownloadDirectory(directory);
         m_settingsWidget->hide();
     } else {
         QMessageBox::warning(

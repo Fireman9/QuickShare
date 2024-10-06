@@ -38,14 +38,30 @@ void FileTransfer::startSending(const std::string& file_path,
     processNextChunk(file_id);
 }
 
-void FileTransfer::startReceiving(const FileMetadata& metadata)
+void FileTransfer::startReceiving(const FileMetadata& metadata,
+                                  const std::string&  downloadPath)
 {
-    std::filesystem::path current_path = std::filesystem::current_path();
-    std::string file_path = (current_path / metadata.getFileName()).string();
-    fs_manager_->createFile(file_path, metadata.getFileSize());
+    std::filesystem::path filePath = downloadPath;
+    if (filePath.empty())
+    {
+        filePath = std::filesystem::current_path() / metadata.getFileName();
+    } else {
+        if (std::filesystem::is_directory(filePath))
+        {
+            filePath /= metadata.getFileName();
+        }
+    }
+
+    std::filesystem::path dir = filePath.parent_path();
+    if (!std::filesystem::exists(dir))
+    {
+        std::filesystem::create_directories(dir);
+    }
+
+    fs_manager_->createFile(filePath, metadata.getFileSize());
 
     TransferInfo info{
-        file_path,
+        filePath.string(),
         "",
         0,
         metadata.getFileSize(),
@@ -54,6 +70,11 @@ void FileTransfer::startReceiving(const FileMetadata& metadata)
         metadata.getFileHash(),
         std::make_unique<ChunkSizeOptimizer>(generatePossibleChunkSizes())};
     active_transfers_[metadata.getFileId()] = std::move(info);
+
+    LOG_INFO(QString("Started receiving file: %1, size: %2 bytes, to path: %3")
+                 .arg(metadata.getFileName().c_str())
+                 .arg(metadata.getFileSize())
+                 .arg(filePath.string().c_str()));
 }
 
 void FileTransfer::handleIncomingChunk(const ChunkMessage& chunk_msg)
